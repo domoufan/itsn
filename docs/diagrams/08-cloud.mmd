@@ -1,0 +1,35 @@
+flowchart LR
+    classDef gh fill:#f1f5f9,stroke:#334155,color:#111
+    classDef rd fill:#e0f2fe,stroke:#0369a1,color:#111
+    classDef ne fill:#dcfce7,stroke:#15803d,color:#111
+    classDef ex fill:#fef3c7,stroke:#b45309,color:#111
+    U[Utilisateurs<br/>HTTPS]:::ex
+    subgraph GitHub
+        REPO[Dépôt Git<br/>main / develop]:::gh
+        CI[Actions : CI<br/>tests · Trivy · images]:::gh
+        CD[Actions : CD<br/>staging auto → approbation → prod]:::gh
+        GHCR[(GHCR<br/>intervit-backend:sha7<br/>intervit-frontend:sha7)]:::gh
+        SEC[Secrets & environnements<br/>deploy hooks, reviewers]:::gh
+    end
+    subgraph Render["Render – région Francfort"]
+        ST[Static Site « intervit »<br/>Angular + réécriture /api]:::rd
+        STG[Web Service<br/>intervit-api-staging<br/>runtime image]:::rd
+        PRD[Web Service<br/>intervit-api – production<br/>runtime image]:::rd
+    end
+    subgraph Neon["Neon PostgreSQL 16"]
+        NB1[(branche staging)]:::ne
+        NB2[(branche main = production)]:::ne
+    end
+    AN[API Anthropic]:::ex
+    REPO --> CI --> GHCR
+    CI --> CD
+    CD -- deploy hook + imgURL --> STG
+    CD -- deploy hook + imgURL<br/>après approbation --> PRD
+    GHCR -. tire l'image .-> STG
+    GHCR -. tire l'image .-> PRD
+    U --> ST
+    ST -- /api/* --> PRD
+    STG --> NB1
+    PRD --> NB2
+    PRD -- triage IA --> AN
+    SEC -.-> CD

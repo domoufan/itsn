@@ -1,0 +1,17 @@
+flowchart LR
+    classDef ext fill:#eef2ff,stroke:#1d4ed8,color:#111
+    classDef sys fill:#0f2140,stroke:#0f2140,color:#fff
+    D[Demandeur<br/>utilisateur client]:::ext
+    M[Responsable support]:::ext
+    T[Technicien]:::ext
+    A[Administrateur]:::ext
+    S((IntervIT<br/>Plateforme ITSM)):::sys
+    IA[(API Claude<br/>Anthropic)]:::ext
+    MAIL[Serveur SMTP<br/>notifications]:::ext
+    D -- "déclare un incident / une demande,<br/>suit, commente, évalue" --> S
+    M -- "qualifie, affecte, valide<br/>les propositions IA, pilote" --> S
+    T -- "prend en charge, planifie,<br/>intervient, résout" --> S
+    A -- "comptes, référentiels, SLA" --> S
+    S -- "demande de triage<br/>(ticket anonymisé + outils)" --> IA
+    IA -- "proposition JSON" --> S
+    S -- "e-mails création / affectation /<br/>résolution / dépassement SLA" --> MAIL

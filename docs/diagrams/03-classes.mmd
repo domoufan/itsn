@@ -1,0 +1,30 @@
+classDiagram
+    direction LR
+    class User { +Long id +String fullName +String email +String passwordHash +Role role +String skills +boolean active }
+    class Site { +Long id +String name +String clientName +String city }
+    class Equipment { +Long id +String assetTag +EquipmentType type +String brand +String model +EquipmentStatus status +LocalDate warrantyEnd }
+    class Category { +Long id +String code +String name }
+    class SlaPolicy { +Priority priority +int responseMinutes +int resolutionMinutes }
+    class Ticket { +String reference +TicketType type +String title +String description +short impact +short urgency +Priority priority +TicketStatus status +Instant responseDueAt +Instant resolutionDueAt +Instant firstResponseAt +Instant resolvedAt +boolean slaResponseBreached +boolean slaResolutionBreached +String resolutionSummary }
+    class TicketComment { +String content +boolean internal +Instant createdAt }
+    class TicketHistory { +String field +String oldValue +String newValue +Instant changedAt }
+    class Intervention { +InterventionMode mode +InterventionStatus status +Instant scheduledStart +Instant scheduledEnd +String report }
+    class KnowledgeArticle { +String title +String content +String tags +boolean published +int views }
+    class AiSuggestion { +SuggestionStatus status +Short suggestedImpact +Short suggestedUrgency +Priority suggestedPriority +String summary +String rationale +String model +int toolCalls +int inputTokens +int outputTokens +BigDecimal estimatedCostUsd }
+    class AuditLog { +String action +String targetType +Long targetId +Instant createdAt }
+    User "0..*" --> "0..1" Site : rattaché à
+    Equipment "0..*" --> "0..1" Site
+    Ticket "0..*" --> "1" User : requester
+    Ticket "0..*" --> "0..1" User : assignee
+    Ticket "0..*" --> "0..1" Category
+    Ticket "0..*" --> "0..1" Site
+    Ticket "0..*" --> "0..1" Equipment
+    Ticket "1" *-- "0..*" TicketComment
+    Ticket "1" *-- "0..*" TicketHistory
+    Ticket "1" *-- "0..*" Intervention
+    Intervention "0..*" --> "1" User : technician
+    KnowledgeArticle "0..*" --> "0..1" Category
+    Ticket "1" *-- "0..*" AiSuggestion
+    AiSuggestion "0..*" --> "0..1" User : suggestedAssignee
+    AiSuggestion "0..*" --> "0..1" User : reviewedBy
+    Ticket ..> SlaPolicy : échéances calculées selon la priorité

@@ -1,0 +1,19 @@
+flowchart LR
+    classDef s fill:#fff,stroke:#334155,color:#111
+    classDef g fill:#dcfce7,stroke:#15803d,color:#111
+    classDef h fill:#fef3c7,stroke:#b45309,color:#111
+    P[push / pull request]:::s --> B
+    subgraph CI["Workflow CI (ci.yml)"]
+        B[Backend<br/>mvn verify<br/>JUnit + PostgreSQL 16<br/>JaCoCo]:::s
+        F[Frontend<br/>npm ci · Vitest<br/>ng build --production]:::s
+        S[Sécurité<br/>Trivy fs : CVE, secrets,<br/>mauvaises configurations<br/>bloquant si CRITICAL/HIGH]:::s
+        D[Images Docker<br/>build multi-étapes · tag sha7<br/>push GHCR · Trivy image]:::g
+        B & F & S --> D
+    end
+    D -- "main uniquement" --> R
+    subgraph CD["Workflow CD (cd.yml)"]
+        R[Résolution de la version<br/>sha7]:::s --> STG[Préproduction<br/>deploy hook Render<br/>+ smoke-test.sh]:::g
+        STG --> AP{{Approbation humaine<br/>environnement « production »}}:::h
+        AP --> PRD[Production<br/>promotion du MÊME artefact<br/>+ smoke-test.sh]:::g
+    end
+    PRD -. retour arrière : relancer avec le sha7 précédent .-> R

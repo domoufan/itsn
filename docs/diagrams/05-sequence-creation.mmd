@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    actor D as Demandeur
+    participant UI as Angular (TicketForm)
+    participant API as TicketController
+    participant S as TicketService
+    participant PM as PriorityMatrix
+    participant SLA as SlaService
+    participant DB as PostgreSQL
+    participant N as NotificationService
+    D->>UI: saisit titre, description, impact, urgence
+    UI->>UI: affiche la priorité indicative (matrice)
+    UI->>API: POST /api/tickets (JWT)
+    API->>API: validation Bean Validation (taille, bornes 1..3)
+    API->>S: create(request)
+    S->>DB: lockByYear(2026) + next() — référence INC-2026-00043
+    S->>PM: compute(impact, urgency)
+    PM-->>S: P3
+    S->>SLA: applyDeadlines(ticket)
+    SLA->>DB: findByPriority(P3)
+    SLA-->>S: responseDueAt = +4 h, resolutionDueAt = +24 h
+    S->>DB: save(ticket) + history(status: null→NEW)
+    S->>N: ticketCreated(ticket)
+    N-->>D: e-mail de confirmation
+    S-->>API: TicketResponse (201 Created)
+    API-->>UI: JSON
+    UI-->>D: redirection vers la fiche du ticket

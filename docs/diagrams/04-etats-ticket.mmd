@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> NEW : création (demandeur)
+    NEW --> ASSIGNED : affectation (responsable)
+    NEW --> CANCELLED : annulation (demandeur / responsable)
+    ASSIGNED --> IN_PROGRESS : prise en charge (technicien affecté)
+    ASSIGNED --> ASSIGNED : réaffectation
+    ASSIGNED --> CANCELLED
+    IN_PROGRESS --> ON_HOLD : attente (pièce, client)
+    ON_HOLD --> IN_PROGRESS : reprise
+    IN_PROGRESS --> RESOLVED : résolution + résumé obligatoire
+    IN_PROGRESS --> ASSIGNED : réaffectation
+    IN_PROGRESS --> CANCELLED
+    ON_HOLD --> CANCELLED
+    RESOLVED --> CLOSED : clôture (demandeur / responsable)
+    RESOLVED --> IN_PROGRESS : réouverture (demandeur)
+    CLOSED --> [*]
+    CANCELLED --> [*]
+    note right of IN_PROGRESS
+        1re entrée en IN_PROGRESS = date de première réponse
+        (contrôle du SLA de prise en compte)
+    end note
+    note right of RESOLVED
+        resolvedAt fixé, contrôle du SLA de résolution
+    end note

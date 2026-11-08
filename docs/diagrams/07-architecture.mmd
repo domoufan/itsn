@@ -1,0 +1,28 @@
+flowchart TB
+    classDef box fill:#fff,stroke:#334155,color:#111
+    classDef ext fill:#eef2ff,stroke:#1d4ed8,color:#111
+    subgraph Client["Poste utilisateur"]
+        B[Navigateur<br/>Angular 22 SPA + Angular Material]:::box
+    end
+    subgraph Front["Serveur web"]
+        NG[nginx<br/>fichiers statiques, réécriture /api → backend,<br/>en-têtes de sécurité]:::box
+    end
+    subgraph Back["API Spring Boot 4 (Java 21)"]
+        direction TB
+        SEC[Spring Security 7<br/>JWT HS256, rôles, CORS]:::box
+        CTRL[Contrôleurs REST<br/>auth · tickets · interventions · catalog · kb · dashboard · ai]:::box
+        SVC[Services métier<br/>TicketService · SlaService · PriorityMatrix<br/>AiSuggestionService · NotificationService]:::box
+        AG[Agent de triage<br/>ClaudeTriageAgent · TriageTools · HeuristicTriageAgent]:::box
+        JPA[Spring Data JPA / Hibernate 7<br/>Flyway – migrations]:::box
+        ACT[Actuator<br/>health · info · metrics]:::box
+        SEC --> CTRL --> SVC --> JPA
+        SVC --> AG
+    end
+    PG[(PostgreSQL 16)]:::box
+    SMTP[SMTP / Mailpit]:::ext
+    LLM[API Anthropic<br/>Messages + tool use]:::ext
+    B -- HTTPS --> NG
+    NG -- /api/* --> SEC
+    JPA --> PG
+    SVC -- e-mails --> SMTP
+    AG -- HTTPS, clé en variable d'environnement --> LLM

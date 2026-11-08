@@ -1,0 +1,17 @@
+flowchart TB
+    classDef s fill:#fff,stroke:#334155,color:#111
+    classDef h fill:#fef3c7,stroke:#b45309,color:#111
+    classDef x fill:#fee2e2,stroke:#b91c1c,color:#111
+    A[Demande cadrée<br/>ticket ouvert, déclenchée par le personnel]:::s --> G{Garde-fous<br/>IA activée ? budget du jour ?<br/>proposition déjà en attente ?}:::s
+    G -- non --> FB[Repli heuristique<br/>simulation locale par mots clés<br/>marquée « heuristic »]:::s
+    G -- oui --> P[Plan implicite du modèle<br/>température 0, ticket en balise ticket_data]:::s
+    P --> L{Boucle bornée<br/>≤ 6 outils · 30 s · 1024 jetons}:::s
+    L -- tool_use --> T[Outils lecture seule<br/>KB · techniciens · tickets similaires<br/>résultats tronqués, en balise tool_data]:::s --> L
+    L -- JSON final --> V[Contrôles automatisés<br/>catégorie existante · échelles 1–3<br/>technicien actif · articles existants]:::s
+    V -- invalide --> E[Proposition FAILED<br/>erreur journalisée, aucune action]:::x
+    V -- valide --> PEND[Proposition PENDING<br/>jetons, latence, coût, trace brute]:::s
+    FB --> PEND
+    PEND --> H{{Revue humaine obligatoire<br/>responsable support}}:::h
+    H -- accepter / partiel --> APP[Application contrôlée au ticket<br/>historique + journal d'audit]:::s
+    H -- rejeter --> REJ[Rejet tracé]:::s
+    L -- limite atteinte / délai --> E

@@ -26,3 +26,6 @@ Thumbs.db
 # Mémoire : fichiers temporaires
 docs/memoire/~$*
 docs/memoire/*.tmp
+
+# Mémoire : aperçus générés
+docs/memoire/preview/

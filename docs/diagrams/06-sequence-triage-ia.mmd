@@ -1,0 +1,37 @@
+sequenceDiagram
+    autonumber
+    actor M as Responsable support
+    participant UI as Angular
+    participant C as AiController
+    participant S as AiSuggestionService
+    participant A as ClaudeTriageAgent
+    participant T as TriageTools (lecture seule)
+    participant LLM as API Claude
+    participant DB as PostgreSQL
+    M->>UI: clic « Triage IA » sur un ticket
+    UI->>C: POST /api/ai/tickets/{id}/triage
+    C->>S: triage(ticketId)
+    S->>S: garde-fous : IA activée ? budget du jour ? proposition déjà en attente ?
+    alt IA indisponible ou budget atteint
+        S->>S: repli HeuristicTriageAgent (simulation locale)
+    else IA disponible
+        S->>A: triage(ticket)
+        A->>LLM: messages(system + balise ticket_data, tools)
+        loop ≤ 6 appels d'outils, délai 30 s
+            LLM-->>A: tool_use (ex. list_technicians)
+            A->>T: execute(nom, paramètres)
+            T->>DB: requêtes en lecture
+            T-->>A: résultat tronqué balise tool_data
+            A->>LLM: tool_result
+        end
+        LLM-->>A: texte final JSON
+        A->>A: parseAndValidate (catégorie, échelles, technicien)
+        A-->>S: TriageResult (sortie, jetons, latence)
+    end
+    S->>DB: save AiSuggestion(status = PENDING) + audit AI_TRIAGE_RUN
+    S-->>UI: proposition (rien n'est appliqué au ticket)
+    M->>UI: file de revue : accepter / partiel / rejeter
+    UI->>C: POST /api/ai/suggestions/{id}/review
+    C->>S: review(id, décision)
+    S->>DB: mise à jour ticket + historique + audit AI_SUGGESTION_REVIEWED
+    S-->>M: ticket qualifié

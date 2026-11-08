@@ -1,0 +1,30 @@
+flowchart LR
+    classDef actor fill:#fff,stroke:#333,color:#111
+    classDef uc fill:#e0ecff,stroke:#1d4ed8,color:#111,rx:30,ry:30
+    subgraph Acteurs
+        D[Demandeur]:::actor
+        T[Technicien]:::actor
+        M[Responsable support]:::actor
+        A[Administrateur]:::actor
+    end
+    subgraph "Système IntervIT"
+        UC1([S'authentifier]):::uc
+        UC2([Créer un ticket]):::uc
+        UC3([Suivre et commenter un ticket]):::uc
+        UC4([Clôturer / rouvrir / évaluer]):::uc
+        UC5([Consulter la base de connaissances]):::uc
+        UC6([Affecter un ticket]):::uc
+        UC7([Lancer le triage IA]):::uc
+        UC8([Valider une proposition IA]):::uc
+        UC9([Prendre en charge / résoudre]):::uc
+        UC10([Planifier une intervention]):::uc
+        UC11([Rédiger un compte rendu]):::uc
+        UC12([Gérer l'inventaire]):::uc
+        UC13([Rédiger un article KB]):::uc
+        UC14([Consulter le tableau de bord]):::uc
+        UC15([Gérer comptes, sites, SLA]):::uc
+    end
+    D --> UC1 & UC2 & UC3 & UC4 & UC5
+    T --> UC1 & UC2 & UC3 & UC5 & UC7 & UC9 & UC10 & UC11 & UC12 & UC13 & UC14
+    M --> UC1 & UC6 & UC7 & UC8 & UC9 & UC10 & UC12 & UC13 & UC14
+    A --> UC1 & UC15 & UC14
