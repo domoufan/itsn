@@ -1,0 +1,92 @@
+# ============================================================================
+# IntervIT – Livraison continue (Render)
+# Mode retenu : livraison continue AVEC validation humaine avant production.
+#  - préproduction : déploiement automatique du même artefact (image taguée) dès que la CI de main réussit ;
+#  - production    : promotion du MÊME artefact après approbation dans l'environnement GitHub « production ».
+# Les URL de déploiement Render sont des secrets ; aucun secret n'apparaît dans les journaux.
+# ============================================================================
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (7 premiers caractères du commit) à déployer ou vers laquelle revenir"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Déterminer la version à livrer
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            sha="${{ github.event.workflow_run.head_sha }}"
+            echo "version=${sha:0:7}" >> "$GITHUB_OUTPUT"
+          fi
+
+  staging:
+    name: Déploiement en préproduction
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Déclencher Render (préproduction) avec l'image versionnée
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+          IMAGE: ghcr.io/${{ github.repository }}-backend:${{ needs.resolve.outputs.version }}
+        run: |
+          test -n "$HOOK" || { echo "Secret RENDER_DEPLOY_HOOK_STAGING manquant"; exit 1; }
+          curl -fsS "${HOOK}&imgURL=${IMAGE}" -o /dev/null
+          echo "Déploiement demandé : $IMAGE"
+      - uses: actions/checkout@v4
+      - name: Tests de bon fonctionnement (santé, version déployée, authentification)
+        env:
+          URL: ${{ vars.STAGING_URL }}
+          EXPECTED: ${{ needs.resolve.outputs.version }}
+        run: bash infra/render/smoke-test.sh "$URL" "$EXPECTED"
+
+  production:
+    name: Promotion en production (approbation requise)
+    needs: [resolve, staging]
+    runs-on: ubuntu-latest
+    environment:
+      name: production          # configuré avec « Required reviewers » : la livraison attend une validation humaine
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Promouvoir le même artefact en production
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}
+          IMAGE: ghcr.io/${{ github.repository }}-backend:${{ needs.resolve.outputs.version }}
+        run: |
+          test -n "$HOOK" || { echo "Secret RENDER_DEPLOY_HOOK_PRODUCTION manquant"; exit 1; }
+          curl -fsS "${HOOK}&imgURL=${IMAGE}" -o /dev/null
+          echo "Promotion demandée : $IMAGE"
+      - name: Vérifications après mise en production
+        env:
+          URL: ${{ vars.PRODUCTION_URL }}
+          EXPECTED: ${{ needs.resolve.outputs.version }}
+        run: bash infra/render/smoke-test.sh "$URL" "$EXPECTED"
+      - name: Trace de livraison
+        run: |
+          {
+            echo "### Production"
+            echo "- Version déployée : \`${{ needs.resolve.outputs.version }}\`"
+            echo "- Retour arrière : relancer ce workflow (workflow_dispatch) avec la version précédente"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/intervit_test}
+    username: ${TEST_DATABASE_USER:intervit}
+    password: ${TEST_DATABASE_PASSWORD:intervit}
+  flyway:
+    clean-disabled: false
+intervit:
+  security:
+    jwt-secret: test-secret-test-secret-test-secret-test-secret-0123456789
+    jwt-expiration-minutes: 60
+    cors-allowed-origins: http://localhost:4200
+  notifications:
+    email-enabled: false
+  ai:
+    enabled: false
+    api-key: ""
+  demo:
+    seed-enabled: false
+logging:
+  level:
+    sn.senetech.intervit: INFO

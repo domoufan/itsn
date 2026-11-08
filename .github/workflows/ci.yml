@@ -1,0 +1,174 @@
+# ============================================================================
+# IntervIT – Intégration continue
+# Déclenchée à chaque push / pull request : compile, teste, analyse la sécurité,
+# puis (sur main uniquement) construit et publie des images Docker versionnées.
+# ============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: ${{ github.repository }}-backend
+  IMAGE_FRONTEND: ${{ github.repository }}-frontend
+
+jobs:
+  # --------------------------------------------------------------------------
+  backend:
+    name: Backend – compilation et tests (JUnit + PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: intervit_test
+          POSTGRES_USER: intervit
+          POSTGRES_PASSWORD: intervit
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U intervit -d intervit_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilation, tests unitaires et d'intégration, couverture
+        env:
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/intervit_test
+          TEST_DATABASE_USER: intervit
+          TEST_DATABASE_PASSWORD: intervit
+        run: mvn -B --no-transfer-progress verify
+      - name: Rapports de tests (preuves pour le chapitre 7)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/site/jacoco/
+          retention-days: 30
+      - name: Publication du JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  frontend:
+    name: Frontend – lint, tests et construction Angular
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Tests unitaires (Vitest)
+        run: npx ng test --watch=false
+      - name: Construction de production
+        run: npm run build -- --configuration production
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/frontend/browser
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  security:
+    name: Sécurité – dépendances, secrets et configuration (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyse du dépôt (vulnérabilités, secrets, mauvaises configurations)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          exit-code: '1'          # une vulnérabilité critique/haute bloque la livraison
+          ignore-unfixed: true
+          format: table
+
+  # --------------------------------------------------------------------------
+  docker:
+    name: Images Docker – construction, analyse et publication (GHCR)
+    needs: [backend, frontend, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        name: Identifiant de version (traçabilité commit -> artefact)
+        run: echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            GIT_COMMIT=${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Analyse de l'image backend publiée
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ steps.meta.outputs.version }}
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+      - name: Résumé
+        run: |
+          {
+            echo "### Artefacts publiés"
+            echo "- Version : \`${{ steps.meta.outputs.version }}\` (commit ${{ github.sha }})"
+            echo "- Backend : \`${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ steps.meta.outputs.version }}\`"
+            echo "- Frontend : \`${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:${{ steps.meta.outputs.version }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
