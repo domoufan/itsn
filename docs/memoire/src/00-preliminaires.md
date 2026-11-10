@@ -3,9 +3,9 @@
 
 Je tiens à exprimer ma reconnaissance à toutes les personnes qui ont contribué à la réalisation de ce travail.
 
-Je remercie en premier lieu mon encadreur, [NOM DE L'ENCADREUR], pour sa disponibilité, la rigueur de ses relectures et les orientations qui ont structuré ce projet, de la formulation du problème jusqu'à la validation des choix techniques.
+Je remercie en premier lieu mon encadreur, M. Wane, pour sa disponibilité, la rigueur de ses relectures et les orientations qui ont structuré ce projet, de la formulation du problème jusqu'à la validation des choix techniques.
 
-Mes remerciements vont également à l'équipe pédagogique de [ÉCOLE / UNIVERSITÉ], dont les enseignements de génie logiciel, de bases de données, de réseaux et de gestion de projet constituent le socle sur lequel repose cette plateforme.
+Mes remerciements vont également à l'équipe pédagogique de l'École 221, dont les enseignements de génie logiciel, de bases de données, de réseaux et de gestion de projet constituent le socle sur lequel repose cette plateforme.
 
 Je remercie enfin ma famille et mes camarades de promotion pour leur soutien constant tout au long de cette année de formation.
 
@@ -19,7 +19,7 @@ Je remercie enfin ma famille et mes camarades de promotion pour leur soutien con
 <<<pagebreak>>>
 # Préambule
 
-Ce mémoire est présenté en vue de l'obtention de la Licence professionnelle [PARCOURS] (code E221) délivrée par [ÉCOLE / UNIVERSITÉ], au titre de l'année académique [ANNÉE ACADÉMIQUE].
+Ce mémoire est présenté en vue de l'obtention de la Licence professionnelle Génie logiciel (code E221) délivrée par l'École 221, au titre de l'année académique 2025-2026.
 
 La formation vise à former des professionnels capables de concevoir, réaliser, tester et mettre en production des solutions informatiques répondant à un besoin métier identifié. Le projet de fin de formation constitue l'aboutissement de ce cursus : il doit démontrer la capacité de l'étudiant à formuler un problème, à mobiliser des connaissances, à concevoir une solution et à en évaluer les résultats, dans une démarche vérifiable.
 
@@ -80,7 +80,7 @@ Tableau : Sigles et abréviations utilisés dans le mémoire
 
 **Problème.** Comment concevoir une plateforme de gestion des interventions techniques, alignée sur les bonnes pratiques ITSM (ITIL), adaptée aux moyens d'une PME, qui garantisse la traçabilité de chaque demande, le respect des engagements de service et l'aide à la décision, tout en intégrant de façon maîtrisée l'intelligence artificielle ?
 
-**Objectif.** Concevoir, réaliser, tester et déployer une application web complète (IntervIT) couvrant le cycle de vie des tickets d'incident et de demande, la planification des interventions, l'inventaire des équipements, la base de connaissances et le pilotage par indicateurs, complétée par un agent d'intelligence artificielle de triage soumis à validation humaine.
+**Objectif.** Concevoir, réaliser, tester et déployer une application web complète (ITSN) couvrant le cycle de vie des tickets d'incident et de demande, la planification des interventions, l'inventaire des équipements, la base de connaissances et le pilotage par indicateurs, complétée par un agent d'intelligence artificielle de triage soumis à validation humaine.
 
 **Méthode.** Étude de cas construite autour d'une ESN fictive dakaroise ; analyse documentaire (ITIL 4, ISO/IEC 20000) et étude comparative de solutions existantes (GLPI, Zammad, osTicket, Freshservice) pour dériver trente-deux exigences identifiées, priorisées et dotées de critères d'acceptation ; gestion de projet itérative inspirée de Scrum ; conception UML ; réalisation en Java 21 / Spring Boot 4 et Angular 22 sur PostgreSQL 16 ; tests unitaires et d'intégration automatisés ; chaîne d'intégration et de livraison continues (GitHub Actions) avec déploiement sur une plateforme cloud (Render, Neon) ; évaluation de l'agent de triage sur un jeu de trente cas.
 
@@ -97,7 +97,7 @@ Tableau : Sigles et abréviations utilisés dans le mémoire
 
 **Problem.** How can we design a technical intervention management platform, aligned with ITSM good practices (ITIL) and suited to an SME's resources, that guarantees the traceability of every request, compliance with service level commitments and decision support, while integrating artificial intelligence in a controlled way?
 
-**Objective.** To design, build, test and deploy a complete web application (IntervIT) covering the lifecycle of incident and request tickets, intervention scheduling, equipment inventory, a knowledge base and indicator-based management, complemented by an AI triage agent subject to human validation.
+**Objective.** To design, build, test and deploy a complete web application (ITSN) covering the lifecycle of incident and request tickets, intervention scheduling, equipment inventory, a knowledge base and indicator-based management, complemented by an AI triage agent subject to human validation.
 
 **Method.** A case study built around a fictional IT services company in Dakar; documentary analysis (ITIL 4, ISO/IEC 20000) and a comparative study of existing solutions (GLPI, Zammad, osTicket, Freshservice) to derive thirty-two identified, prioritised requirements with acceptance criteria; an iterative, Scrum-inspired project management approach; UML design; implementation in Java 21 / Spring Boot 4 and Angular 22 on PostgreSQL 16; automated unit and integration tests; a continuous integration and delivery pipeline (GitHub Actions) with deployment to a cloud platform (Render, Neon); evaluation of the triage agent on a set of thirty cases.
 

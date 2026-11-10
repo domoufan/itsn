@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TriageTools.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ai</a> &gt; <span class="el_source">TriageTools.java</span></div><h1>TriageTools.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ai;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import sn.senetech.itsn.domain.*;
+import sn.senetech.itsn.repository.KnowledgeArticleRepository;
+import sn.senetech.itsn.repository.TicketRepository;
+import sn.senetech.itsn.repository.UserRepository;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Outils mis à disposition de l'agent. Principe du moindre privilège : tous sont en LECTURE SEULE,
+ * ne renvoient que des données nécessaires au triage et jamais de données personnelles sensibles
+ * (pas d'e-mail, pas de mot de passe, pas de téléphone). Les contenus renvoyés sont tronqués.
+ */
+@Component
+public class TriageTools {
+
+    public static final String SEARCH_KB = &quot;search_knowledge_base&quot;;
+    public static final String LIST_TECHNICIANS = &quot;list_technicians&quot;;
+    public static final String FIND_SIMILAR = &quot;find_similar_tickets&quot;;
+
+<span class="fc" id="L28">    private static final EnumSet&lt;TicketStatus&gt; ACTIVE = EnumSet.of(TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS, TicketStatus.ON_HOLD);</span>
+    private static final int MAX_TEXT = 400;
+
+    private final KnowledgeArticleRepository articles;
+    private final UserRepository users;
+    private final TicketRepository tickets;
+
+<span class="fc" id="L35">    public TriageTools(KnowledgeArticleRepository articles, UserRepository users, TicketRepository tickets) {</span>
+<span class="fc" id="L36">        this.articles = articles; this.users = users; this.tickets = tickets;</span>
+<span class="fc" id="L37">    }</span>
+
+    /** Déclaration des outils au format attendu par l'API (JSON Schema des paramètres). */
+    public List&lt;AnthropicApi.Tool&gt; definitions() {
+<span class="nc" id="L41">        return List.of(</span>
+            new AnthropicApi.Tool(SEARCH_KB,
+                &quot;Recherche des articles publiés dans la base de connaissances interne. Renvoie id, titre et extrait.&quot;,
+<span class="nc" id="L44">                Map.of(&quot;type&quot;, &quot;object&quot;,</span>
+<span class="nc" id="L45">                    &quot;properties&quot;, Map.of(&quot;query&quot;, Map.of(&quot;type&quot;, &quot;string&quot;, &quot;description&quot;, &quot;Mots clés (3 à 6 mots)&quot;)),</span>
+<span class="nc" id="L46">                    &quot;required&quot;, List.of(&quot;query&quot;))),</span>
+            new AnthropicApi.Tool(LIST_TECHNICIANS,
+                &quot;Liste les techniciens actifs avec leurs compétences et leur nombre de tickets actifs (charge).&quot;,
+<span class="nc" id="L49">                Map.of(&quot;type&quot;, &quot;object&quot;, &quot;properties&quot;, Map.of())),</span>
+            new AnthropicApi.Tool(FIND_SIMILAR,
+                &quot;Recherche des tickets déjà résolus ressemblant à la demande. Renvoie référence, titre, catégorie et résumé de résolution.&quot;,
+<span class="nc" id="L52">                Map.of(&quot;type&quot;, &quot;object&quot;,</span>
+<span class="nc" id="L53">                    &quot;properties&quot;, Map.of(&quot;query&quot;, Map.of(&quot;type&quot;, &quot;string&quot;, &quot;description&quot;, &quot;Mots clés du symptôme&quot;)),</span>
+<span class="nc" id="L54">                    &quot;required&quot;, List.of(&quot;query&quot;)))</span>
+        );
+    }
+
+    /** Exécute un outil ; toute erreur est renvoyée à l'agent comme texte, jamais propagée. */
+    @Transactional(readOnly = true)
+    public String execute(String name, Map&lt;String, Object&gt; input) {
+        try {
+<span class="nc bnc" id="L62" title="All 4 branches missed.">            return switch (name) {</span>
+<span class="nc" id="L63">                case SEARCH_KB -&gt; searchKb(stringArg(input, &quot;query&quot;));</span>
+<span class="nc" id="L64">                case LIST_TECHNICIANS -&gt; listTechnicians();</span>
+<span class="nc" id="L65">                case FIND_SIMILAR -&gt; findSimilar(stringArg(input, &quot;query&quot;));</span>
+<span class="nc" id="L66">                default -&gt; &quot;Erreur : outil inconnu « &quot; + name + &quot; »&quot;;</span>
+            };
+<span class="nc" id="L68">        } catch (Exception e) {</span>
+<span class="nc" id="L69">            return &quot;Erreur lors de l'exécution de l'outil : &quot; + e.getClass().getSimpleName();</span>
+        }
+    }
+
+    String searchKb(String query) {
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (query.isBlank()) return &quot;Aucun résultat (requête vide).&quot;;</span>
+<span class="nc" id="L75">        var page = articles.search(sanitize(query), true, PageRequest.of(0, 5));</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (page.isEmpty()) return &quot;Aucun article trouvé.&quot;;</span>
+<span class="nc" id="L77">        return page.getContent().stream()</span>
+<span class="nc" id="L78">            .map(a -&gt; &quot;- id=%d | %s | %s&quot;.formatted(a.getId(), a.getTitle(), truncate(a.getContent())))</span>
+<span class="nc" id="L79">            .collect(Collectors.joining(&quot;\n&quot;));</span>
+    }
+
+    String listTechnicians() {
+<span class="nc" id="L83">        List&lt;User&gt; techs = users.findByRoleAndActiveTrueOrderByFullName(Role.TECHNICIAN);</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (techs.isEmpty()) return &quot;Aucun technicien actif.&quot;;</span>
+<span class="nc" id="L85">        return techs.stream()</span>
+<span class="nc" id="L86">            .map(u -&gt; &quot;- id=%d | %s | compétences : %s | tickets actifs : %d&quot;.formatted(</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                u.getId(), u.getFullName(), u.getSkills() == null ? &quot;non renseignées&quot; : u.getSkills(),</span>
+<span class="nc" id="L88">                tickets.countByAssigneeIdAndStatusIn(u.getId(), ACTIVE)))</span>
+<span class="nc" id="L89">            .collect(Collectors.joining(&quot;\n&quot;));</span>
+    }
+
+    String findSimilar(String query) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (query.isBlank()) return &quot;Aucun résultat (requête vide).&quot;;</span>
+<span class="nc" id="L94">        var page = tickets.searchResolved(sanitize(query), PageRequest.of(0, 5));</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (page.isEmpty()) return &quot;Aucun ticket similaire résolu.&quot;;</span>
+<span class="nc" id="L96">        return page.getContent().stream()</span>
+<span class="nc" id="L97">            .map(t -&gt; &quot;- %s | %s | catégorie=%s | priorité=%s | résolution : %s&quot;.formatted(</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">                t.getReference(), t.getTitle(), t.getCategory() == null ? &quot;?&quot; : t.getCategory().getCode(), t.getPriority(),</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                truncate(t.getResolutionSummary() == null ? &quot;&quot; : t.getResolutionSummary())))</span>
+<span class="nc" id="L100">            .collect(Collectors.joining(&quot;\n&quot;));</span>
+    }
+
+    private static String stringArg(Map&lt;String, Object&gt; input, String key) {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        Object v = input == null ? null : input.get(key);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        return v == null ? &quot;&quot; : String.valueOf(v).trim();</span>
+    }
+
+    /** Limite la taille et neutralise les caractères de contrôle d'une requête fournie par le modèle. */
+    private static String sanitize(String s) {
+<span class="nc" id="L110">        String cleaned = s.replaceAll(&quot;[\\p{Cntrl}%_]&quot;, &quot; &quot;).trim();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        return cleaned.length() &gt; 80 ? cleaned.substring(0, 80) : cleaned;</span>
+    }
+
+    private static String truncate(String s) {
+<span class="nc" id="L115">        String flat = s.replaceAll(&quot;\\s+&quot;, &quot; &quot;).trim();</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        return flat.length() &gt; MAX_TEXT ? flat.substring(0, MAX_TEXT) + &quot;…&quot; : flat;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HeuristicTriageAgent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ai</a> &gt; <span class="el_source">HeuristicTriageAgent.java</span></div><h1>HeuristicTriageAgent.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ai;
+
+import org.springframework.stereotype.Component;
+import sn.senetech.itsn.domain.Role;
+import sn.senetech.itsn.domain.Ticket;
+import sn.senetech.itsn.domain.TicketStatus;
+import sn.senetech.itsn.domain.User;
+import sn.senetech.itsn.repository.TicketRepository;
+import sn.senetech.itsn.repository.UserRepository;
+
+import java.util.*;
+
+/**
+ * SOLUTION DE REPLI (simulation locale, sans IA) : triage par mots clés.
+ * Utilisée quand l'API est indisponible, hors budget ou désactivée, et pour les tests automatisés.
+ * Les propositions sont marquées avec le fournisseur « heuristic » afin de ne jamais être confondues
+ * avec une sortie du modèle.
+ */
+@Component
+public class HeuristicTriageAgent implements TriageAgent {
+
+<span class="fc" id="L22">    private static final Map&lt;String, List&lt;String&gt;&gt; KEYWORDS = new LinkedHashMap&lt;&gt;();</span>
+    static {
+<span class="fc" id="L24">        KEYWORDS.put(&quot;SECURITY&quot;, List.of(&quot;virus&quot;, &quot;phishing&quot;, &quot;hameçonnage&quot;, &quot;ransomware&quot;, &quot;piraté&quot;, &quot;malware&quot;, &quot;suspect&quot;));</span>
+<span class="fc" id="L25">        KEYWORDS.put(&quot;NETWORK&quot;,  List.of(&quot;wifi&quot;, &quot;wi-fi&quot;, &quot;réseau&quot;, &quot;internet&quot;, &quot;connexion&quot;, &quot;vpn&quot;, &quot;switch&quot;, &quot;routeur&quot;, &quot;ping&quot;, &quot;lent&quot;));</span>
+<span class="fc" id="L26">        KEYWORDS.put(&quot;EMAIL&quot;,    List.of(&quot;mail&quot;, &quot;messagerie&quot;, &quot;outlook&quot;, &quot;courriel&quot;, &quot;boîte&quot;));</span>
+<span class="fc" id="L27">        KEYWORDS.put(&quot;ACCOUNT&quot;,  List.of(&quot;mot de passe&quot;, &quot;compte&quot;, &quot;accès&quot;, &quot;identifiant&quot;, &quot;connexion refusée&quot;, &quot;droits&quot;, &quot;verrouillé&quot;));</span>
+<span class="fc" id="L28">        KEYWORDS.put(&quot;SERVER&quot;,   List.of(&quot;serveur&quot;, &quot;sauvegarde&quot;, &quot;backup&quot;, &quot;restauration&quot;, &quot;nas&quot;, &quot;partage&quot;));</span>
+<span class="fc" id="L29">        KEYWORDS.put(&quot;HARDWARE&quot;, List.of(&quot;imprimante&quot;, &quot;écran&quot;, &quot;clavier&quot;, &quot;souris&quot;, &quot;disque&quot;, &quot;batterie&quot;, &quot;ne s'allume&quot;, &quot;bruit&quot;, &quot;onduleur&quot;, &quot;pc&quot;, &quot;ordinateur&quot;));</span>
+<span class="fc" id="L30">        KEYWORDS.put(&quot;SOFTWARE&quot;, List.of(&quot;logiciel&quot;, &quot;application&quot;, &quot;excel&quot;, &quot;word&quot;, &quot;mise à jour&quot;, &quot;licence&quot;, &quot;plante&quot;, &quot;erreur&quot;, &quot;installer&quot;));</span>
+    }
+
+<span class="fc" id="L33">    private static final EnumSet&lt;TicketStatus&gt; ACTIVE = EnumSet.of(TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS, TicketStatus.ON_HOLD);</span>
+
+    private final UserRepository users;
+    private final TicketRepository tickets;
+
+<span class="fc" id="L38">    public HeuristicTriageAgent(UserRepository users, TicketRepository tickets) {</span>
+<span class="fc" id="L39">        this.users = users; this.tickets = tickets;</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+<span class="fc" id="L43">    public String providerName() { return &quot;heuristic&quot;; }</span>
+
+    @Override
+    public TriageResult triage(Ticket ticket) {
+<span class="fc" id="L47">        long start = System.currentTimeMillis();</span>
+<span class="fc" id="L48">        String text = (ticket.getTitle() + &quot; &quot; + ticket.getDescription()).toLowerCase(Locale.ROOT);</span>
+
+<span class="fc" id="L50">        String category = &quot;OTHER&quot;;</span>
+<span class="fc" id="L51">        int best = 0;</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        for (var e : KEYWORDS.entrySet()) {</span>
+<span class="fc" id="L53">            int hits = (int) e.getValue().stream().filter(text::contains).count();</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (hits &gt; best) { best = hits; category = e.getKey(); }</span>
+<span class="fc" id="L55">        }</span>
+
+<span class="pc bpc" id="L57" title="4 of 10 branches missed.">        boolean many = text.contains(&quot;tous&quot;) || text.contains(&quot;toute l'équipe&quot;) || text.contains(&quot;plusieurs&quot;) || text.contains(&quot;site&quot;) || text.contains(&quot;agence&quot;);</span>
+<span class="pc bpc" id="L58" title="4 of 10 branches missed.">        boolean blocked = text.contains(&quot;bloqué&quot;) || text.contains(&quot;impossible&quot;) || text.contains(&quot;ne fonctionne plus&quot;) || text.contains(&quot;arrêt&quot;) || text.contains(&quot;urgent&quot;);</span>
+<span class="pc bpc" id="L59" title="1 of 4 branches missed.">        int impact = many ? 1 : (blocked ? 2 : 3);</span>
+<span class="pc bpc" id="L60" title="3 of 8 branches missed.">        int urgency = &quot;SECURITY&quot;.equals(category) || text.contains(&quot;urgent&quot;) || text.contains(&quot;production&quot;) ? 1 : (blocked ? 2 : 3);</span>
+
+<span class="fc" id="L62">        Long techId = null;</span>
+<span class="fc" id="L63">        long minLoad = Long.MAX_VALUE;</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        for (User u : users.findByRoleAndActiveTrueOrderByFullName(Role.TECHNICIAN)) {</span>
+<span class="fc" id="L65">            long load = tickets.countByAssigneeIdAndStatusIn(u.getId(), ACTIVE);</span>
+<span class="pc bpc" id="L66" title="1 of 4 branches missed.">            boolean skilled = u.getSkills() != null &amp;&amp; u.getSkills().toLowerCase(Locale.ROOT).contains(category.toLowerCase(Locale.ROOT));</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">            long score = skilled ? load : load + 100; // priorité à la compétence, puis à la charge la plus faible</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">            if (score &lt; minLoad) { minLoad = score; techId = u.getId(); }</span>
+<span class="fc" id="L69">        }</span>
+
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">        String summary = ticket.getTitle().length() &gt; 120 ? ticket.getTitle().substring(0, 120) : ticket.getTitle();</span>
+<span class="fc" id="L72">        String rationale = &quot;Simulation par mots clés (%d correspondance(s) pour %s) ; impact %d / urgence %d déduits des termes du ticket.&quot;</span>
+<span class="fc" id="L73">            .formatted(best, category, impact, urgency);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        TriageOutput out = new TriageOutput(category, impact, urgency, techId, summary, rationale, List.of(), best == 0 ? 0.2 : Math.min(0.9, 0.4 + 0.15 * best));</span>
+<span class="fc" id="L75">        return new TriageResult(out, providerName(), 0, 0, 0, System.currentTimeMillis() - start, &quot;heuristic&quot;, null);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

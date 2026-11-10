@@ -25,15 +25,23 @@ import { DueInPipe, PriorityLabelPipe, StatusLabelPipe } from '../../core/pipes'
   template: `
     @if (ticket(); as t) {
     <div class="page">
-      <div class="page-header">
-        <div>
-          <a mat-button routerLink="/tickets"><mat-icon>arrow_back</mat-icon> Tickets</a>
-          <h1><span class="mono">{{ t.reference }}</span> — {{ t.title }}</h1>
-          <div class="toolbar-row">
+      <div class="hero prio-bg-{{ t.priority }}">
+        <a mat-button routerLink="/tickets" class="back"><mat-icon>arrow_back</mat-icon> Tickets</a>
+        <div class="hero-main">
+          <div class="ref-chip mono">{{ t.reference }}</div>
+          <h1>{{ t.title }}</h1>
+          <div class="toolbar-row" style="margin:10px 0 0">
             <span class="badge prio-{{ t.priority }}">{{ t.priority | priorityLabel }}</span>
             <span class="badge st-{{ t.status }}">{{ t.status | statusLabel }}</span>
-            <span class="muted small">{{ t.type === 'INCIDENT' ? 'Incident' : 'Demande' }} · {{ t.category?.name }} · créé le {{ t.createdAt | date:'dd/MM/yyyy HH:mm' }} par {{ t.requester.fullName }}</span>
+            <span class="chip-soft">{{ t.type === 'INCIDENT' ? 'Incident' : 'Demande' }}</span>
+            <span class="chip-soft">{{ t.category?.name }}</span>
+            <span class="muted small">créé le {{ t.createdAt | date:'dd/MM/yyyy HH:mm' }} par <strong>{{ t.requester.fullName }}</strong></span>
           </div>
+        </div>
+        <div class="stepper">
+          @for (s of steps; track s; let i = $index) {
+            <div class="step" [class.done]="stepIndex(t.status) > i" [class.cur]="stepIndex(t.status) === i"><span class="dot"></span><span class="lbl">{{ s | statusLabel }}</span></div>
+          }
         </div>
       </div>
 
@@ -161,6 +169,20 @@ import { DueInPipe, PriorityLabelPipe, StatusLabelPipe } from '../../core/pipes'
     }
   `,
   styles: [`
+    .hero { background: #fff; border: 1px solid var(--itsn-line); border-radius: var(--itsn-radius); padding: 14px 20px 18px; margin-bottom: 18px; box-shadow: var(--itsn-shadow-1); position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--itsn-green-500); }
+    .prio-bg-P1::before { background: var(--itsn-p1); } .prio-bg-P2::before { background: var(--itsn-p2); } .prio-bg-P3::before { background: var(--itsn-p3); } .prio-bg-P4::before { background: var(--itsn-p4); }
+    .back { margin-left: -8px; color: var(--itsn-text-2) !important; }
+    .ref-chip { display: inline-block; background: var(--itsn-navy-800); color: var(--itsn-green-300); padding: 3px 10px; border-radius: 8px; font-size: .8rem; margin-bottom: 6px; }
+    .hero h1 { margin: 0; font-size: 1.5rem; color: var(--itsn-navy-800); }
+    .stepper { display: flex; gap: 0; margin-top: 18px; }
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; font-size: .72rem; color: var(--itsn-text-3); font-weight: 600; }
+    .step:not(:last-child)::after { content: ''; position: absolute; top: 7px; left: 50%; width: 100%; height: 3px; background: var(--itsn-line); z-index: 0; }
+    .step.done:not(:last-child)::after { background: var(--itsn-green-400); }
+    .dot { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--itsn-line); z-index: 1; transition: all var(--itsn-med); }
+    .step.done .dot { background: var(--itsn-green-400); border-color: var(--itsn-green-400); }
+    .step.cur .dot { border-color: var(--itsn-green-500); box-shadow: 0 0 0 5px var(--itsn-green-100); animation: pulse 1.8s infinite; }
+    .step.done, .step.cur { color: var(--itsn-green-700); }
     .comment { padding: 10px 12px; border-left: 3px solid #cbd5e1; background: #fff; margin-bottom: 10px; border-radius: 4px; }
     .comment.internal { border-left-color: #f59e0b; background: #fffbeb; }
     h4 { margin: 12px 0 6px; }
@@ -181,6 +203,8 @@ export class TicketDetailComponent {
   readonly technicians = signal<UserAdmin[]>([]);
   readonly pendingStatus = signal<TicketStatus | null>(null);
 
+  readonly steps: TicketStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+  stepIndex(s: TicketStatus) { return s === 'ON_HOLD' ? 2 : s === 'CANCELLED' ? -1 : this.steps.indexOf(s); }
   assigneeId: number | null = null; statusComment = ''; resolutionSummary = ''; newComment = ''; internalComment = false; score: number | null = null;
 
   readonly isRequester = computed(() => this.ticket()?.requester.id === this.auth.user()?.id);

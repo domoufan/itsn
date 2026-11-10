@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlaPolicyController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.catalog</a> &gt; <span class="el_source">SlaPolicyController.java</span></div><h1>SlaPolicyController.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.catalog;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import sn.senetech.itsn.common.BusinessException;
+import sn.senetech.itsn.domain.Priority;
+import sn.senetech.itsn.domain.SlaPolicy;
+import sn.senetech.itsn.repository.SlaPolicyRepository;
+import sn.senetech.itsn.ticket.SlaService;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/sla-policies&quot;)
+public class SlaPolicyController {
+
+<span class="nc" id="L20">    public record SlaRequest(@NotBlank String label, @Min(1) int responseMinutes, @Min(1) int resolutionMinutes) {}</span>
+<span class="nc" id="L21">    public record SlaResponse(Long id, Priority priority, String label, int responseMinutes, int resolutionMinutes) {</span>
+<span class="nc" id="L22">        static SlaResponse from(SlaPolicy p) { return new SlaResponse(p.getId(), p.getPriority(), p.getLabel(), p.getResponseMinutes(), p.getResolutionMinutes()); }</span>
+    }
+
+    private final SlaPolicyRepository repository;
+    private final SlaService slaService;
+
+<span class="fc" id="L28">    public SlaPolicyController(SlaPolicyRepository repository, SlaService slaService) { this.repository = repository; this.slaService = slaService; }</span>
+
+    @GetMapping
+<span class="nc" id="L31">    public List&lt;SlaResponse&gt; list() { return repository.findAll().stream().sorted((a, b) -&gt; a.getPriority().compareTo(b.getPriority())).map(SlaResponse::from).toList(); }</span>
+
+    @PutMapping(&quot;/{priority}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public SlaResponse update(@PathVariable Priority priority, @Valid @RequestBody SlaRequest req) {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (req.resolutionMinutes() &lt; req.responseMinutes()) throw new BusinessException(&quot;Le délai de résolution doit être supérieur ou égal au délai de réponse&quot;);</span>
+<span class="nc" id="L37">        SlaPolicy p = slaService.policyFor(priority);</span>
+<span class="nc" id="L38">        p.setLabel(req.label()); p.setResponseMinutes(req.responseMinutes()); p.setResolutionMinutes(req.resolutionMinutes());</span>
+<span class="nc" id="L39">        return SlaResponse.from(repository.save(p));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

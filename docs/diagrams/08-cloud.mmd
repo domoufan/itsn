@@ -8,13 +8,13 @@ flowchart LR
         REPO[Dépôt Git<br/>main / develop]:::gh
         CI[Actions : CI<br/>tests · Trivy · images]:::gh
         CD[Actions : CD<br/>staging auto → approbation → prod]:::gh
-        GHCR[(GHCR<br/>intervit-backend:sha7<br/>intervit-frontend:sha7)]:::gh
+        GHCR[(GHCR<br/>itsn-backend:sha7<br/>itsn-frontend:sha7)]:::gh
         SEC[Secrets & environnements<br/>deploy hooks, reviewers]:::gh
     end
     subgraph Render["Render – région Francfort"]
-        ST[Static Site « intervit »<br/>Angular + réécriture /api]:::rd
-        STG[Web Service<br/>intervit-api-staging<br/>runtime image]:::rd
-        PRD[Web Service<br/>intervit-api – production<br/>runtime image]:::rd
+        ST[Static Site « itsn »<br/>Angular + réécriture /api]:::rd
+        STG[Web Service<br/>itsn-api-staging<br/>runtime image]:::rd
+        PRD[Web Service<br/>itsn-api – production<br/>runtime image]:::rd
     end
     subgraph Neon["Neon PostgreSQL 16"]
         NB1[(branche staging)]:::ne

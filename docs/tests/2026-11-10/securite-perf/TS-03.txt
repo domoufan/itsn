@@ -1,0 +1,4 @@
+# TS-03 tentative d'injection SQL dans la recherche
+résultats renvoyés : 0 (attendu 0 : la chaîne est traitée comme texte)
+concaténations SQL dans le code :
+0

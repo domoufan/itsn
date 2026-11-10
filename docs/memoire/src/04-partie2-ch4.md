@@ -7,7 +7,7 @@ Ce chapitre décrit la solution avant sa réalisation et montre comment elle ré
 
 ### Vue d'ensemble : diagramme de contexte
 
-![Diagramme de contexte d'IntervIT : acteurs humains et systèmes externes (réalisation personnelle)](../diagrams/01-contexte.png)
+![Diagramme de contexte d'ITSN : acteurs humains et systèmes externes (réalisation personnelle)](../diagrams/01-contexte.png)
 
 Le système échange avec quatre acteurs humains et deux systèmes externes. Les flux vers l'API d'intelligence artificielle ne contiennent que le contenu du ticket (titre, description, type, site, équipement) et les résultats d'outils en lecture seule ; aucune adresse e-mail, aucun mot de passe ni numéro de téléphone n'est transmis.
 
@@ -38,9 +38,25 @@ Tableau : Principales règles métier
 | RM-09 | Le triage bascule sur la simulation locale si l'IA est désactivée, si la clé est absente ou si le budget journalier est atteint | Garde-fous de `AiSuggestionService.triage()` |
 | RM-10 | Les comptes ne sont jamais supprimés mais désactivés, afin de conserver l'historique | `UserAdminController.deactivate()` |
 
-### Maquettes et scénarios
+### Charte graphique et principes d'expérience utilisateur
 
-Les écrans ont été conçus selon un gabarit unique : navigation latérale filtrée par rôle, barre d'outils de filtres, tableau ou cartes, fiche détaillée avec onglets (commentaires, interventions, triage IA, historique). Les captures des écrans réalisés sont présentées au chapitre 6 ; elles tiennent lieu de maquettes haute fidélité, les maquettes basse fidélité initiales ayant été directement traduites en composants Angular Material pour gagner du temps.
+L'interface a été conçue comme un produit, avec une charte graphique explicite plutôt qu'un assemblage de composants par défaut. Les choix suivants répondent à des objectifs d'usage : un responsable support doit repérer en une seconde ce qui est critique ; un technicien sur le terrain doit lire l'écran sur un portable modeste ; un demandeur peu technique doit comprendre où en est sa demande sans formation.
+
+![Charte graphique d'ITSN : couleurs, sémantique, typographie, composants et principes de mouvement (réalisation personnelle)](../diagrams/12-charte-graphique.png)
+
+Tableau : Principes de conception de l'interface et leur traduction
+
+| Principe | Traduction dans ITSN |
+|---|---|
+| Identité : univers ServiceNow (vert lumineux sur bleu nuit) | Navigation latérale en dégradé bleu nuit (#032D42 → #021C2A) ; vert primaire #1F9D5A pour les actions (contraste AA sur blanc) ; vert « Now » #62D84E réservé aux accents (indicateur actif, logo) |
+| Hiérarchie visuelle | Titre de page en Inter 800, cartes à coins arrondis (14 px) et ombre douce, en-têtes de tableau sombres, références de tickets en police à chasse fixe |
+| Couleur jamais seule | Priorités et états portés par un badge « point + texte » ; palette sémantique fixe (P1 rouge, P2 orange, P3 bleu, P4 vert) identique partout |
+| Mouvement au service du sens | Entrée de page en fondu (600 ms), apparition en cascade des cartes, compteurs animés, anneaux SLA et barres qui se remplissent ; la pulsation est réservée aux éléments critiques (P1, étape en cours) ; respect du réglage système « réduire les animations » |
+| Retour immédiat | Messages de succès et d'erreur lisibles, détail par champ en cas de saisie invalide, squelettes de chargement, états vides illustrés avec une phrase d'orientation |
+| Autonomie du demandeur | Fil d'étapes (Nouveau → Affecté → En cours → Résolu → Clôturé) en tête de chaque ticket ; engagements de service exprimés en temps restant (« dans 7 h 51 min ») |
+| Performance perçue et connectivité | Polices (Inter, JetBrains Mono) et icônes auto-hébergées : aucune dépendance à un service externe au chargement ; écrans chargés à la demande (bundle initial de 95 Ko transférés) |
+
+Les maquettes basse fidélité initiales ont été traduites directement en composants Angular Material personnalisés par la charte ; les captures des écrans réalisés (chapitre 6) tiennent lieu de maquettes haute fidélité.
 
 ## Modélisation
 
@@ -78,7 +94,7 @@ Le triage montre les deux temps du pipeline agentique : l'exécution bornée de 
 
 ### Composants, interfaces et flux
 
-![Architecture logicielle d'IntervIT (réalisation personnelle)](../diagrams/07-architecture.png)
+![Architecture logicielle d'ITSN (réalisation personnelle)](../diagrams/07-architecture.png)
 
 L'architecture est une architecture **client-serveur à trois niveaux** : une application monopage Angular servie par nginx, une API REST Spring Boot organisée en couches (sécurité, contrôleurs, services, persistance), une base PostgreSQL. Le choix d'une **application monolithique modulaire** plutôt que de microservices est délibéré : pour une PME et une équipe réduite, un seul déployable simplifie l'exploitation, les transactions et les tests ; les modules (auth, ticket, intervention, catalog, kb, dashboard, ai) sont séparés en paquets Java pour préserver la possibilité d'une extraction ultérieure.
 

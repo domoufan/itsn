@@ -21,7 +21,7 @@ import { RoleLabelPipe } from '../../core/pipes';
   imports: [DatePipe, FormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatTabsModule, MatCheckboxModule, RoleLabelPipe],
   template: `
     <div class="page">
-      <div class="page-header"><h1>Administration</h1></div>
+      <div class="page-header"><div><h1>Administration</h1><p class="subtitle">Comptes, sites clients et politiques de service</p></div></div>
       <mat-tab-group>
         <mat-tab label="Utilisateurs">
           <div style="padding:16px 0">
@@ -78,9 +78,9 @@ import { RoleLabelPipe } from '../../core/pipes';
           </div>
         </mat-tab>
         <mat-tab label="Politiques SLA">
-          <div style="padding:16px 0" class="grid grid-4">
+          <div style="padding:16px 0" class="grid grid-4 stagger">
             @for (p of sla(); track p.priority) {
-              <mat-card><mat-card-header><mat-card-title><span class="badge prio-{{ p.priority }}">{{ p.priority }}</span></mat-card-title></mat-card-header>
+              <mat-card class="lift"><mat-card-header><mat-card-title><span class="badge prio-{{ p.priority }}">{{ p.priority }}</span></mat-card-title></mat-card-header>
                 <mat-card-content>
                   <mat-form-field class="full" appearance="outline"><mat-label>Libellé</mat-label><input matInput [(ngModel)]="p.label" /></mat-form-field>
                   <mat-form-field class="full" appearance="outline"><mat-label>Prise en compte (minutes)</mat-label><input matInput type="number" [(ngModel)]="p.responseMinutes" /></mat-form-field>

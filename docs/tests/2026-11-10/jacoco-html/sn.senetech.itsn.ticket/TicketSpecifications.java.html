@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TicketSpecifications.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ticket</a> &gt; <span class="el_source">TicketSpecifications.java</span></div><h1>TicketSpecifications.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ticket;
+
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
+import sn.senetech.itsn.domain.Ticket;
+import sn.senetech.itsn.domain.TicketStatus;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/** Construction dynamique des filtres de la liste des tickets. */
+public final class TicketSpecifications {
+    private TicketSpecifications() {}
+
+    public static Specification&lt;Ticket&gt; from(TicketDtos.TicketFilter f) {
+<span class="fc" id="L16">        return (root, query, cb) -&gt; {</span>
+<span class="fc" id="L17">            List&lt;Predicate&gt; p = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L18" title="1 of 2 branches missed.">            if (f.status() != null) p.add(cb.equal(root.get(&quot;status&quot;), f.status()));</span>
+<span class="pc bpc" id="L19" title="1 of 2 branches missed.">            if (f.priority() != null) p.add(cb.equal(root.get(&quot;priority&quot;), f.priority()));</span>
+<span class="pc bpc" id="L20" title="1 of 2 branches missed.">            if (f.type() != null) p.add(cb.equal(root.get(&quot;type&quot;), f.type()));</span>
+<span class="pc bpc" id="L21" title="1 of 2 branches missed.">            if (f.assigneeId() != null) p.add(cb.equal(root.get(&quot;assignee&quot;).get(&quot;id&quot;), f.assigneeId()));</span>
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">            if (f.requesterId() != null) p.add(cb.equal(root.get(&quot;requester&quot;).get(&quot;id&quot;), f.requesterId()));</span>
+<span class="pc bpc" id="L23" title="1 of 2 branches missed.">            if (f.siteId() != null) p.add(cb.equal(root.get(&quot;site&quot;).get(&quot;id&quot;), f.siteId()));</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">            if (f.categoryId() != null) p.add(cb.equal(root.get(&quot;category&quot;).get(&quot;id&quot;), f.categoryId()));</span>
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">            if (Boolean.TRUE.equals(f.openOnly())) {</span>
+<span class="nc" id="L26">                p.add(root.get(&quot;status&quot;).in(TicketStatus.NEW, TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS, TicketStatus.ON_HOLD));</span>
+            }
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">            if (Boolean.TRUE.equals(f.slaBreached())) {</span>
+<span class="nc" id="L29">                p.add(cb.or(cb.isTrue(root.get(&quot;slaResponseBreached&quot;)), cb.isTrue(root.get(&quot;slaResolutionBreached&quot;))));</span>
+            }
+<span class="pc bpc" id="L31" title="3 of 4 branches missed.">            if (f.search() != null &amp;&amp; !f.search().isBlank()) {</span>
+<span class="nc" id="L32">                String like = &quot;%&quot; + f.search().trim().toLowerCase() + &quot;%&quot;;</span>
+<span class="nc" id="L33">                p.add(cb.or(</span>
+<span class="nc" id="L34">                    cb.like(cb.lower(root.get(&quot;reference&quot;)), like),</span>
+<span class="nc" id="L35">                    cb.like(cb.lower(root.get(&quot;title&quot;)), like),</span>
+<span class="nc" id="L36">                    cb.like(cb.lower(root.get(&quot;description&quot;)), like)));</span>
+            }
+<span class="fc" id="L38">            return cb.and(p.toArray(Predicate[]::new));</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

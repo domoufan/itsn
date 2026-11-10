@@ -1,0 +1,11 @@
+# TS-05 journal d'audit
+    action     | target_type | target_id | actor_id |        quand        
+---------------+-------------+-----------+----------+---------------------
+ LOGIN_FAILED  | USER        |         2 |        2 | 2026-11-10 05:50:05
+ LOGIN_SUCCESS | USER        |         2 |        2 | 2026-11-10 05:50:05
+ LOGIN_SUCCESS | USER        |         2 |        2 | 2026-11-10 05:48:39
+ LOGIN_SUCCESS | USER        |         1 |        1 | 2026-11-10 05:48:02
+ LOGIN_SUCCESS | USER        |         2 |        2 | 2026-11-10 05:47:37
+ LOGIN_SUCCESS | USER        |         1 |        1 | 2026-11-10 05:46:34
+(6 rows)
+

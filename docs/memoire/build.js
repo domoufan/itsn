@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Construction du mémoire IntervIT (.docx) à partir des sources Markdown de ./src.
+ * Construction du mémoire ITSN (.docx) à partir des sources Markdown de ./src.
  * - styles Word natifs (Titre 1/2/3) => sommaire, table des matières, listes des figures et tableaux générés par champs ;
  * - légendes numérotées (champs SEQ), numérotation automatique des sections de chapitre ;
  * - page de garde, pagination romaine (préliminaires) puis arabe (corps).
@@ -13,7 +13,7 @@ const sharp = require('sharp');
 const D = require('docx');
 
 const SRC = path.join(__dirname, 'src');
-const OUT = process.argv[2] || path.join(__dirname, 'Memoire_IntervIT_ITSM.docx');
+const OUT = process.argv[2] || path.join(__dirname, 'Memoire_ITSN_ITSM.docx');
 const META = JSON.parse(fs.readFileSync(path.join(__dirname, 'meta.json'), 'utf8'));
 
 const FONT = 'Calibri';
@@ -291,7 +291,7 @@ async function main() {
   const footer = (label) => new D.Footer({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [
     new D.TextRun({ text: `${META.titreCourt} — `, size: 18, color: '6B7280' }), new D.TextRun({ children: [D.PageNumber.CURRENT], size: 18, color: '6B7280' })] })] });
   const header = new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: 'D1D5DB' } },
-    children: [new D.TextRun({ text: 'Plateforme de gestion des interventions techniques (ITSM) — IntervIT', size: 16, color: '6B7280', italics: true })] })] });
+    children: [new D.TextRun({ text: 'Plateforme de gestion des interventions techniques (ITSM) — ITSN', size: 16, color: '6B7280', italics: true })] })] });
 
   const pageProps = { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN } };
 

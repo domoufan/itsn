@@ -1,4 +1,4 @@
-# IntervIT — Plateforme de gestion des interventions techniques (ITSM)
+# ITSN — Plateforme de gestion des interventions techniques (ITSM)
 
 Projet de fin de formation, Licence professionnelle E221. Étude de cas **fictive** : le service support de
 *SénéTech Services*, ESN dakaroise qui assure la maintenance informatique de PME clientes.
@@ -26,13 +26,13 @@ Projet de fin de formation, Licence professionnelle E221. Étude de cas **fictiv
 ## Démarrage rapide
 
 ```bash
-git clone <url-du-depot> && cd intervit
+git clone <url-du-depot> && cd itsn
 cp .env.example .env
 docker compose up --build
 ```
 - Interface : http://localhost:8081 — API : http://localhost:8080 — Swagger : http://localhost:8080/swagger-ui.html — E-mails capturés : http://localhost:8025
 
-Sans Docker : PostgreSQL local (`createdb intervit`), puis `cd backend && mvn spring-boot:run` et `cd frontend && npm ci && npm start` (http://localhost:4200).
+Sans Docker : PostgreSQL local (`createdb itsn`), puis `cd backend && mvn spring-boot:run` et `cd frontend && npm ci && npm start` (http://localhost:4200).
 
 ### Comptes de démonstration (mot de passe : `Demo@2026!`)
 
@@ -46,7 +46,7 @@ Sans Docker : PostgreSQL local (`createdb intervit`), puis `cd backend && mvn sp
 ## Tests
 
 ```bash
-cd backend && mvn verify          # unitaires + intégration (PostgreSQL requis : intervit_test) + couverture JaCoCo (target/site/jacoco)
+cd backend && mvn verify          # unitaires + intégration (PostgreSQL requis : itsn_test) + couverture JaCoCo (target/site/jacoco)
 cd frontend && npx ng test --watch=false
 python3 tools/eval/evaluate_triage.py --email manager@senetech.example --password 'Demo@2026!' --fallback
 ```
@@ -54,7 +54,7 @@ python3 tools/eval/evaluate_triage.py --email manager@senetech.example --passwor
 ## Organisation du dépôt
 
 ```
-backend/      API Spring Boot (src/main/java/sn/senetech/intervit : auth, ticket, intervention, catalog, kb, dashboard, ai, seed)
+backend/      API Spring Boot (src/main/java/sn/senetech/itsn : auth, ticket, intervention, catalog, kb, dashboard, ai, seed)
 frontend/     Application Angular (src/app : core, layout, features)
 infra/        Blueprint Render, script de tests post-déploiement
 .github/      Workflows CI (ci.yml) et CD (cd.yml)

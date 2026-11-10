@@ -1,5 +1,5 @@
 # ============================================================================
-# IntervIT – Intégration continue
+# ITSN – Intégration continue
 # Déclenchée à chaque push / pull request : compile, teste, analyse la sécurité,
 # puis (sur main uniquement) construit et publie des images Docker versionnées.
 # ============================================================================
@@ -34,12 +34,12 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: intervit_test
-          POSTGRES_USER: intervit
-          POSTGRES_PASSWORD: intervit
+          POSTGRES_DB: itsn_test
+          POSTGRES_USER: itsn
+          POSTGRES_PASSWORD: itsn
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U intervit -d intervit_test"
+          --health-cmd "pg_isready -U itsn -d itsn_test"
           --health-interval 5s --health-timeout 3s --health-retries 20
     defaults:
       run:
@@ -53,9 +53,9 @@ jobs:
           cache: maven
       - name: Compilation, tests unitaires et d'intégration, couverture
         env:
-          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/intervit_test
-          TEST_DATABASE_USER: intervit
-          TEST_DATABASE_PASSWORD: intervit
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/itsn_test
+          TEST_DATABASE_USER: itsn
+          TEST_DATABASE_PASSWORD: itsn
         run: mvn -B --no-transfer-progress verify
       - name: Rapports de tests (preuves pour le chapitre 7)
         if: always()

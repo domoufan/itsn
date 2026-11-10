@@ -1,5 +1,5 @@
 # ============================================================================
-# IntervIT – Livraison continue (Render)
+# ITSN – Livraison continue (Render)
 # Mode retenu : livraison continue AVEC validation humaine avant production.
 #  - préproduction : déploiement automatique du même artefact (image taguée) dès que la CI de main réussit ;
 #  - production    : promotion du MÊME artefact après approbation dans l'environnement GitHub « production ».

@@ -1,0 +1,6 @@
+# TS-02 hachage des mots de passe et politique de complexité
+ tech.reseau@senetech.example   | $2a$12$ |     60
+ tech.materiel@senetech.example | $2a$12$ |     60
+ tech.logiciel@senetech.example | $2a$12$ |     60
+
+changement vers 'abc' : {"timestamp":"2026-11-10T05:50:05.493039985Z","status":400,"error":"Bad Request","message":"Données invalides","path":"/api/auth/change-password","fieldErrors":{"newPassword":"Le mot de passe doit contenir majuscule, minuscule et chiffre"}}

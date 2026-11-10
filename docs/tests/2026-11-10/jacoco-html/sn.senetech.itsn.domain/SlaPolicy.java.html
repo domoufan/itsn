@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlaPolicy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.domain</a> &gt; <span class="el_source">SlaPolicy.java</span></div><h1>SlaPolicy.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.domain;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = &quot;sla_policies&quot;)
+<span class="fc" id="L7">public class SlaPolicy {</span>
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, unique = true, length = 2) private Priority priority;
+    @Column(nullable = false, length = 40) private String label;
+    @Column(name = &quot;response_minutes&quot;, nullable = false) private int responseMinutes;
+    @Column(name = &quot;resolution_minutes&quot;, nullable = false) private int resolutionMinutes;
+
+<span class="nc" id="L15">    public Long getId() { return id; }</span>
+<span class="nc" id="L16">    public Priority getPriority() { return priority; }</span>
+<span class="fc" id="L17">    public void setPriority(Priority priority) { this.priority = priority; }</span>
+<span class="nc" id="L18">    public String getLabel() { return label; }</span>
+<span class="fc" id="L19">    public void setLabel(String label) { this.label = label; }</span>
+<span class="fc" id="L20">    public int getResponseMinutes() { return responseMinutes; }</span>
+<span class="fc" id="L21">    public void setResponseMinutes(int responseMinutes) { this.responseMinutes = responseMinutes; }</span>
+<span class="fc" id="L22">    public int getResolutionMinutes() { return resolutionMinutes; }</span>
+<span class="fc" id="L23">    public void setResolutionMinutes(int resolutionMinutes) { this.resolutionMinutes = resolutionMinutes; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

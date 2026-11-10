@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EquipmentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.catalog</a> &gt; <span class="el_source">EquipmentController.java</span></div><h1>EquipmentController.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.catalog;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import sn.senetech.itsn.common.BusinessException;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.Equipment;
+import sn.senetech.itsn.domain.EquipmentStatus;
+import sn.senetech.itsn.domain.EquipmentType;
+import sn.senetech.itsn.repository.EquipmentRepository;
+import sn.senetech.itsn.repository.SiteRepository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/** Inventaire simplifié des équipements (CMDB) rattachés aux sites clients. */
+@RestController
+@RequestMapping(&quot;/api/equipment&quot;)
+public class EquipmentController {
+
+<span class="nc" id="L26">    public record EquipmentRequest(@NotBlank @Size(max = 40) String assetTag, @NotNull EquipmentType type, String brand, String model,</span>
+                                   String serialNumber, Long siteId, EquipmentStatus status, LocalDate purchaseDate, LocalDate warrantyEnd,
+                                   @Size(max = 500) String notes) {}
+
+<span class="nc" id="L30">    public record EquipmentResponse(Long id, String assetTag, EquipmentType type, String brand, String model, String serialNumber,</span>
+                                    Long siteId, String siteName, EquipmentStatus status, LocalDate purchaseDate, LocalDate warrantyEnd, String notes) {
+        static EquipmentResponse from(Equipment e) {
+<span class="nc" id="L33">            return new EquipmentResponse(e.getId(), e.getAssetTag(), e.getType(), e.getBrand(), e.getModel(), e.getSerialNumber(),</span>
+<span class="nc bnc" id="L34" title="All 4 branches missed.">                e.getSite() == null ? null : e.getSite().getId(), e.getSite() == null ? null : e.getSite().getName(),</span>
+<span class="nc" id="L35">                e.getStatus(), e.getPurchaseDate(), e.getWarrantyEnd(), e.getNotes());</span>
+        }
+    }
+
+    private final EquipmentRepository equipment;
+    private final SiteRepository sites;
+
+<span class="fc" id="L42">    public EquipmentController(EquipmentRepository equipment, SiteRepository sites) { this.equipment = equipment; this.sites = sites; }</span>
+
+    @GetMapping
+    public List&lt;EquipmentResponse&gt; list(@RequestParam(required = false) Long siteId) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        List&lt;Equipment&gt; l = siteId == null ? equipment.findAll() : equipment.findBySiteIdOrderByAssetTag(siteId);</span>
+<span class="nc" id="L47">        return l.stream().map(EquipmentResponse::from).toList();</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public EquipmentResponse get(@PathVariable Long id) {
+<span class="nc" id="L52">        return EquipmentResponse.from(equipment.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Équipement&quot;, id)));</span>
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','MANAGER','TECHNICIAN')&quot;)
+    public EquipmentResponse create(@Valid @RequestBody EquipmentRequest req) {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (equipment.existsByAssetTag(req.assetTag())) throw new BusinessException(&quot;Numéro d'inventaire déjà existant&quot;);</span>
+<span class="nc" id="L60">        Equipment e = new Equipment();</span>
+<span class="nc" id="L61">        apply(e, req);</span>
+<span class="nc" id="L62">        return EquipmentResponse.from(equipment.save(e));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','MANAGER','TECHNICIAN')&quot;)
+    public EquipmentResponse update(@PathVariable Long id, @Valid @RequestBody EquipmentRequest req) {
+<span class="nc" id="L68">        Equipment e = equipment.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Équipement&quot;, id));</span>
+<span class="nc" id="L69">        apply(e, req);</span>
+<span class="nc" id="L70">        return EquipmentResponse.from(equipment.save(e));</span>
+    }
+
+    private void apply(Equipment e, EquipmentRequest r) {
+<span class="nc" id="L74">        e.setAssetTag(r.assetTag().trim().toUpperCase()); e.setType(r.type()); e.setBrand(r.brand()); e.setModel(r.model());</span>
+<span class="nc" id="L75">        e.setSerialNumber(r.serialNumber()); e.setPurchaseDate(r.purchaseDate()); e.setWarrantyEnd(r.warrantyEnd()); e.setNotes(r.notes());</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (r.status() != null) e.setStatus(r.status());</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        e.setSite(r.siteId() == null ? null : sites.findById(r.siteId()).orElseThrow(() -&gt; new NotFoundException(&quot;Site&quot;, r.siteId())));</span>
+<span class="nc" id="L78">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

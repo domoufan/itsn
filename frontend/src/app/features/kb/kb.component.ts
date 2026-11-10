@@ -19,14 +19,14 @@ import { Article, Category } from '../../core/models';
   imports: [DatePipe, FormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule],
   template: `
     <div class="page">
-      <div class="page-header"><h1>Base de connaissances</h1>
+      <div class="page-header"><div><h1>Base de connaissances</h1><p class="subtitle">Procédures et solutions partagées par l'équipe support</p></div>
         <div class="toolbar-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width:300px"><mat-label>Rechercher</mat-label><input matInput [(ngModel)]="q" (keyup.enter)="load()" /><mat-icon matSuffix>search</mat-icon></mat-form-field>
           @if (auth.isStaff()) { <button mat-flat-button color="primary" (click)="draft.set({ published: false })"><mat-icon>add</mat-icon> Rédiger</button> }
         </div>
       </div>
       @if (draft(); as d) {
-        <mat-card style="margin-bottom:16px"><mat-card-content>
+        <mat-card class="lift" style="margin-bottom:16px"><mat-card-content>
           <mat-form-field class="full" appearance="outline"><mat-label>Titre</mat-label><input matInput [(ngModel)]="d.title" /></mat-form-field>
           <div class="form-grid">
             <mat-form-field appearance="outline"><mat-label>Catégorie</mat-label><mat-select [(ngModel)]="d.categoryId">@for (c of categories(); track c.id) { <mat-option [value]="c.id">{{ c.name }}</mat-option> }</mat-select></mat-form-field>
@@ -37,9 +37,9 @@ import { Article, Category } from '../../core/models';
           <div><button mat-flat-button color="primary" (click)="save(d)">Enregistrer</button> <button mat-button (click)="draft.set(null)">Annuler</button></div>
         </mat-card-content></mat-card>
       }
-      <div class="grid grid-2">
+      <div class="grid grid-2 stagger">
         @for (a of items(); track a.id) {
-          <mat-card>
+          <mat-card class="lift">
             <mat-card-header><mat-card-title>{{ a.title }}</mat-card-title><mat-card-subtitle>{{ a.categoryName }} · {{ a.tags }} · {{ a.views }} vues · {{ a.updatedAt | date:'dd/MM/yyyy' }} @if (!a.published) { · <em>brouillon</em> }</mat-card-subtitle></mat-card-header>
             <mat-card-content><p class="pre" [class.small]="!expanded().has(a.id)">{{ expanded().has(a.id) ? a.content : (a.content.length > 220 ? a.content.slice(0, 220) + '…' : a.content) }}</p></mat-card-content>
             <mat-card-actions>

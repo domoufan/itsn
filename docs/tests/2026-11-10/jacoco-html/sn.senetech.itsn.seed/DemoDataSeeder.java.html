@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DemoDataSeeder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.seed</a> &gt; <span class="el_source">DemoDataSeeder.java</span></div><h1>DemoDataSeeder.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.seed;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import sn.senetech.itsn.config.AppProperties;
+import sn.senetech.itsn.domain.*;
+import sn.senetech.itsn.repository.*;
+import sn.senetech.itsn.ticket.PriorityMatrix;
+import sn.senetech.itsn.ticket.SlaService;
+import sn.senetech.itsn.ticket.TicketReferenceService;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.*;
+
+/**
+ * DONNÉES FICTIVES de démonstration (aucune donnée réelle). Chargées une seule fois si la base est vide
+ * et si {@code itsn.demo.seed-enabled=true}. Comptes de démonstration : voir README.
+ */
+@Component
+@Profile(&quot;!test&quot;)
+public class DemoDataSeeder implements CommandLineRunner {
+
+<span class="nc" id="L30">    private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);</span>
+    public static final String DEMO_PASSWORD = &quot;Demo@2026!&quot;;
+
+    private final AppProperties properties;
+    private final PasswordEncoder encoder;
+    private final UserRepository users;
+    private final SiteRepository sites;
+    private final CategoryRepository categories;
+    private final EquipmentRepository equipment;
+    private final TicketRepository tickets;
+    private final TicketCommentRepository comments;
+    private final TicketHistoryRepository history;
+    private final InterventionRepository interventions;
+    private final KnowledgeArticleRepository articles;
+    private final SlaService slaService;
+    private final TicketReferenceService references;
+    private final SeedTransaction tx;
+
+    public DemoDataSeeder(AppProperties properties, PasswordEncoder encoder, UserRepository users, SiteRepository sites,
+                          CategoryRepository categories, EquipmentRepository equipment, TicketRepository tickets,
+                          TicketCommentRepository comments, TicketHistoryRepository history, InterventionRepository interventions,
+<span class="nc" id="L51">                          KnowledgeArticleRepository articles, SlaService slaService, TicketReferenceService references, SeedTransaction tx) {</span>
+<span class="nc" id="L52">        this.properties = properties; this.encoder = encoder; this.users = users; this.sites = sites; this.categories = categories;</span>
+<span class="nc" id="L53">        this.equipment = equipment; this.tickets = tickets; this.comments = comments; this.history = history;</span>
+<span class="nc" id="L54">        this.interventions = interventions; this.articles = articles; this.slaService = slaService; this.references = references; this.tx = tx;</span>
+<span class="nc" id="L55">    }</span>
+
+    @Override
+    public void run(String... args) {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (!properties.demo().seedEnabled()) return;</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (users.count() &gt; 0) { log.info(&quot;Données déjà présentes : aucun chargement de démonstration&quot;); return; }</span>
+<span class="nc" id="L61">        tx.run(this::seed);</span>
+<span class="nc" id="L62">        log.info(&quot;Jeu de données fictives chargé : {} utilisateurs, {} tickets&quot;, users.count(), tickets.count());</span>
+<span class="nc" id="L63">    }</span>
+
+    private void seed() {
+<span class="nc" id="L66">        Random rnd = new Random(42); // reproductible</span>
+<span class="nc" id="L67">        String hash = encoder.encode(DEMO_PASSWORD);</span>
+
+        // --- Sites clients (fictifs)
+<span class="nc" id="L70">        Site hq = site(&quot;Siège SénéTech&quot;, &quot;SénéTech Services&quot;, &quot;Sacré-Cœur 3, Villa 9800&quot;, &quot;Dakar&quot;, &quot;+221 33 800 00 00&quot;);</span>
+<span class="nc" id="L71">        Site s1 = site(&quot;Agence Plateau&quot;, &quot;Banque Atlantique du Sahel (fictif)&quot;, &quot;Avenue Léopold Sédar Senghor&quot;, &quot;Dakar&quot;, &quot;+221 33 821 00 01&quot;);</span>
+<span class="nc" id="L72">        Site s2 = site(&quot;Usine Rufisque&quot;, &quot;Agro-Sénégal Industries (fictif)&quot;, &quot;Zone industrielle&quot;, &quot;Rufisque&quot;, &quot;+221 33 836 00 02&quot;);</span>
+<span class="nc" id="L73">        Site s3 = site(&quot;Clinique Mermoz&quot;, &quot;Clinique Les Mamelles (fictif)&quot;, &quot;Route de la Corniche Ouest&quot;, &quot;Dakar&quot;, &quot;+221 33 860 00 03&quot;);</span>
+<span class="nc" id="L74">        Site s4 = site(&quot;Agence Thiès&quot;, &quot;Assur'Teranga (fictif)&quot;, &quot;Avenue Lamine Guèye&quot;, &quot;Thiès&quot;, &quot;+221 33 951 00 04&quot;);</span>
+
+        // --- Personnel
+<span class="nc" id="L77">        User admin = user(&quot;Awa Ndiaye&quot;, &quot;admin@senetech.example&quot;, Role.ADMIN, hq, null, hash);</span>
+<span class="nc" id="L78">        User manager = user(&quot;Moussa Diop&quot;, &quot;manager@senetech.example&quot;, Role.MANAGER, hq, null, hash);</span>
+<span class="nc" id="L79">        User t1 = user(&quot;Ibrahima Sarr&quot;, &quot;tech.reseau@senetech.example&quot;, Role.TECHNICIAN, hq, &quot;NETWORK,SERVER,SECURITY&quot;, hash);</span>
+<span class="nc" id="L80">        User t2 = user(&quot;Fatou Bâ&quot;, &quot;tech.materiel@senetech.example&quot;, Role.TECHNICIAN, hq, &quot;HARDWARE,PRINTER,UPS&quot;, hash);</span>
+<span class="nc" id="L81">        User t3 = user(&quot;Cheikh Fall&quot;, &quot;tech.logiciel@senetech.example&quot;, Role.TECHNICIAN, hq, &quot;SOFTWARE,EMAIL,ACCOUNT&quot;, hash);</span>
+<span class="nc" id="L82">        User t4 = user(&quot;Mariama Sow&quot;, &quot;tech.systeme@senetech.example&quot;, Role.TECHNICIAN, hq, &quot;SERVER,SECURITY,ACCOUNT&quot;, hash);</span>
+<span class="nc" id="L83">        User t5 = user(&quot;Ousmane Gueye&quot;, &quot;tech.terrain@senetech.example&quot;, Role.TECHNICIAN, hq, &quot;HARDWARE,NETWORK&quot;, hash);</span>
+<span class="nc" id="L84">        List&lt;User&gt; techs = List.of(t1, t2, t3, t4, t5);</span>
+
+        // --- Demandeurs côté clients
+<span class="nc" id="L87">        User r1 = user(&quot;Aminata Faye&quot;, &quot;a.faye@client-bas.example&quot;, Role.REQUESTER, s1, null, hash);</span>
+<span class="nc" id="L88">        User r2 = user(&quot;Pape Mbaye&quot;, &quot;p.mbaye@client-bas.example&quot;, Role.REQUESTER, s1, null, hash);</span>
+<span class="nc" id="L89">        User r3 = user(&quot;Khady Diallo&quot;, &quot;k.diallo@agro-senegal.example&quot;, Role.REQUESTER, s2, null, hash);</span>
+<span class="nc" id="L90">        User r4 = user(&quot;Lamine Cissé&quot;, &quot;l.cisse@agro-senegal.example&quot;, Role.REQUESTER, s2, null, hash);</span>
+<span class="nc" id="L91">        User r5 = user(&quot;Dr Ndèye Thiam&quot;, &quot;n.thiam@clinique-mamelles.example&quot;, Role.REQUESTER, s3, null, hash);</span>
+<span class="nc" id="L92">        User r6 = user(&quot;Abdou Kane&quot;, &quot;a.kane@assur-teranga.example&quot;, Role.REQUESTER, s4, null, hash);</span>
+<span class="nc" id="L93">        User demoReq = user(&quot;Demandeur Démo&quot;, &quot;user@client.example&quot;, Role.REQUESTER, s1, null, hash);</span>
+<span class="nc" id="L94">        List&lt;User&gt; requesters = List.of(r1, r2, r3, r4, r5, r6, demoReq);</span>
+
+        // --- Équipements
+<span class="nc" id="L97">        List&lt;Equipment&gt; eq = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L98">        String[][] eqData = {</span>
+            {&quot;BAS-PC-001&quot;, &quot;DESKTOP&quot;, &quot;Dell&quot;, &quot;OptiPlex 7010&quot;}, {&quot;BAS-PC-002&quot;, &quot;LAPTOP&quot;, &quot;HP&quot;, &quot;ProBook 450 G9&quot;},
+            {&quot;BAS-PRN-001&quot;, &quot;PRINTER&quot;, &quot;HP&quot;, &quot;LaserJet Pro M428&quot;}, {&quot;BAS-SW-001&quot;, &quot;SWITCH&quot;, &quot;Cisco&quot;, &quot;Catalyst 1000-24T&quot;},
+            {&quot;AGS-SRV-001&quot;, &quot;SERVER&quot;, &quot;Dell&quot;, &quot;PowerEdge T350&quot;}, {&quot;AGS-UPS-001&quot;, &quot;UPS&quot;, &quot;APC&quot;, &quot;Smart-UPS 1500&quot;},
+            {&quot;AGS-PC-010&quot;, &quot;DESKTOP&quot;, &quot;Lenovo&quot;, &quot;ThinkCentre M70q&quot;}, {&quot;AGS-AP-003&quot;, &quot;ACCESS_POINT&quot;, &quot;Ubiquiti&quot;, &quot;UniFi U6 Lite&quot;},
+            {&quot;CLM-PC-004&quot;, &quot;LAPTOP&quot;, &quot;Lenovo&quot;, &quot;ThinkPad E14&quot;}, {&quot;CLM-PRN-002&quot;, &quot;PRINTER&quot;, &quot;Canon&quot;, &quot;i-SENSYS MF445dw&quot;},
+            {&quot;CLM-RT-001&quot;, &quot;ROUTER&quot;, &quot;MikroTik&quot;, &quot;hEX S&quot;}, {&quot;AST-PC-007&quot;, &quot;DESKTOP&quot;, &quot;HP&quot;, &quot;ProDesk 400 G9&quot;},
+            {&quot;AST-SRV-001&quot;, &quot;SERVER&quot;, &quot;HPE&quot;, &quot;ProLiant ML30&quot;}, {&quot;AST-PRN-001&quot;, &quot;PRINTER&quot;, &quot;Epson&quot;, &quot;EcoTank L15150&quot;},
+        };
+<span class="nc" id="L107">        Site[] eqSites = {s1, s1, s1, s1, s2, s2, s2, s2, s3, s3, s3, s4, s4, s4};</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        for (int i = 0; i &lt; eqData.length; i++) {</span>
+<span class="nc" id="L109">            Equipment e = new Equipment();</span>
+<span class="nc" id="L110">            e.setAssetTag(eqData[i][0]); e.setType(EquipmentType.valueOf(eqData[i][1])); e.setBrand(eqData[i][2]); e.setModel(eqData[i][3]);</span>
+<span class="nc" id="L111">            e.setSerialNumber(&quot;SN&quot; + (100000 + rnd.nextInt(900000))); e.setSite(eqSites[i]);</span>
+<span class="nc" id="L112">            e.setPurchaseDate(LocalDate.of(2022 + rnd.nextInt(3), 1 + rnd.nextInt(12), 1 + rnd.nextInt(28)));</span>
+<span class="nc" id="L113">            e.setWarrantyEnd(e.getPurchaseDate().plusYears(3));</span>
+<span class="nc" id="L114">            eq.add(equipment.save(e));</span>
+        }
+
+        // --- Base de connaissances
+<span class="nc" id="L118">        Map&lt;String, Category&gt; cat = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L119">        categories.findAll().forEach(c -&gt; cat.put(c.getCode(), c));</span>
+<span class="nc" id="L120">        article(&quot;Réinitialiser un mot de passe Active Directory&quot;, cat.get(&quot;ACCOUNT&quot;), t4, &quot;mot de passe,AD,compte&quot;,</span>
+            &quot;1. Vérifier l'identité du demandeur (rappel sur le numéro du site).\n2. Ouvrir « Utilisateurs et ordinateurs AD ».\n3. Clic droit &gt; Réinitialiser le mot de passe, cocher « doit changer à la prochaine ouverture ».\n4. Déverrouiller le compte si nécessaire.\n5. Informer l'utilisateur et consigner dans le ticket.&quot;);
+<span class="nc" id="L122">        article(&quot;Imprimante réseau hors ligne : procédure de diagnostic&quot;, cat.get(&quot;HARDWARE&quot;), t2, &quot;imprimante,réseau,spooler&quot;,</span>
+            &quot;1. Vérifier l'alimentation et l'écran de l'imprimante.\n2. Imprimer la page de configuration réseau et contrôler l'adresse IP.\n3. Depuis un poste : ping de l'IP ; si échec, contrôler le câble et le port du switch.\n4. Redémarrer le service Spouleur d'impression sur le poste.\n5. Si l'IP a changé, corriger le port TCP/IP du pilote ou fixer une réservation DHCP.&quot;);
+<span class="nc" id="L124">        article(&quot;Wi-Fi lent ou instable sur un site client&quot;, cat.get(&quot;NETWORK&quot;), t1, &quot;wifi,débit,canal&quot;,</span>
+            &quot;1. Mesurer le débit au plus près de la borne puis en zone de plainte.\n2. Contrôler le nombre de clients par borne et les interférences (canaux 1/6/11 en 2,4 GHz).\n3. Vérifier le firmware des bornes et le lien montant.\n4. Basculer les postes compatibles en 5 GHz.\n5. Proposer une borne supplémentaire si la couverture est insuffisante.&quot;);
+<span class="nc" id="L126">        article(&quot;Suspicion de phishing : conduite à tenir&quot;, cat.get(&quot;SECURITY&quot;), t4, &quot;phishing,sécurité,incident&quot;,</span>
+            &quot;1. Ne pas cliquer, ne pas répondre, ne pas transférer le message à des collègues.\n2. Isoler le poste du réseau si un lien a été ouvert ou une pièce jointe exécutée.\n3. Changer immédiatement les mots de passe depuis un autre poste.\n4. Analyser le poste avec l'antivirus à jour.\n5. Signaler l'incident au responsable support et conserver l'e-mail en preuve.&quot;);
+<span class="nc" id="L128">        article(&quot;Outlook : réparer un profil qui ne s'ouvre plus&quot;, cat.get(&quot;EMAIL&quot;), t3, &quot;outlook,profil,messagerie&quot;,</span>
+            &quot;1. Lancer Outlook en mode sans échec (outlook.exe /safe) pour écarter un complément défectueux.\n2. Panneau de configuration &gt; Courrier &gt; Afficher les profils &gt; Ajouter un nouveau profil.\n3. Reconfigurer le compte ; conserver l'ancien fichier OST en sauvegarde.\n4. Vérifier la taille de la boîte et archiver si &gt; 50 Go.&quot;);
+<span class="nc" id="L130">        article(&quot;Sauvegarde serveur : vérification quotidienne&quot;, cat.get(&quot;SERVER&quot;), t1, &quot;sauvegarde,backup,restauration&quot;,</span>
+            &quot;1. Contrôler le rapport de sauvegarde de la nuit (statut, volume, durée).\n2. En cas d'échec : espace disque de la destination, service de sauvegarde, journaux d'événements.\n3. Relancer manuellement la tâche et vérifier.\n4. Un test de restauration d'un fichier est réalisé chaque mois et consigné.&quot;);
+<span class="nc" id="L132">        article(&quot;Poste qui ne démarre plus : check-list terrain&quot;, cat.get(&quot;HARDWARE&quot;), t5, &quot;démarrage,alimentation,disque&quot;,</span>
+            &quot;1. Vérifier prise, multiprise et câble d'alimentation ; tester sur une autre prise.\n2. Observer les voyants et bips au démarrage.\n3. Débrancher les périphériques USB puis réessayer.\n4. Tester avec un autre bloc d'alimentation / batterie.\n5. Si le disque n'est pas détecté : sauvegarder les données via un boîtier externe avant remplacement.&quot;);
+<span class="nc" id="L134">        article(&quot;Créer un accès VPN pour un télétravailleur&quot;, cat.get(&quot;NETWORK&quot;), t1, &quot;vpn,accès distant,télétravail&quot;,</span>
+            &quot;1. Demande validée par le responsable du client (e-mail conservé dans le ticket).\n2. Créer le compte VPN avec authentification à deux facteurs.\n3. Transmettre le guide d'installation et la configuration par canal sécurisé.\n4. Tester la connexion avec l'utilisateur et consigner.&quot;);
+
+        // --- Tickets : scénarios réalistes répartis sur 60 jours
+<span class="nc" id="L138">        Instant now = Instant.now();</span>
+<span class="nc" id="L139">        Object[][] data = {</span>
+            // titre, description, catégorie, impact, urgence, demandeur, site, équipement idx (ou -1), tech, état, âge jours
+<span class="nc" id="L141">            {&quot;Imprimante du guichet hors ligne&quot;, &quot;L'imprimante HP du guichet 2 affiche « hors ligne » depuis ce matin. Les clients attendent leurs reçus. Redémarrage déjà tenté.&quot;, &quot;HARDWARE&quot;, 2, 2, r1, s1, 2, t2, TicketStatus.RESOLVED, 40},</span>
+<span class="nc" id="L142">            {&quot;Wi-Fi très lent dans l'open space&quot;, &quot;Tous les collaborateurs de l'open space se plaignent de la lenteur du Wi-Fi depuis l'installation des nouveaux postes. Le filaire fonctionne normalement.&quot;, &quot;NETWORK&quot;, 1, 2, r2, s1, 3, t1, TicketStatus.CLOSED, 38},</span>
+<span class="nc" id="L143">            {&quot;Mot de passe oublié après congés&quot;, &quot;Je reviens de congés et mon mot de passe Windows est refusé. Le compte semble verrouillé.&quot;, &quot;ACCOUNT&quot;, 2, 2, r3, s2, -1, t3, TicketStatus.CLOSED, 35},</span>
+<span class="nc" id="L144">            {&quot;Serveur de fichiers inaccessible&quot;, &quot;Plus personne à l'usine ne peut ouvrir le lecteur partagé P:. La production est bloquée pour l'impression des bons de livraison. URGENT.&quot;, &quot;SERVER&quot;, 1, 1, r4, s2, 4, t4, TicketStatus.CLOSED, 33},</span>
+<span class="nc" id="L145">            {&quot;E-mail suspect avec pièce jointe&quot;, &quot;J'ai reçu un e-mail d'un soi-disant fournisseur avec une facture .zip. J'ai ouvert le fichier mais rien ne s'est passé. Est-ce dangereux ?&quot;, &quot;SECURITY&quot;, 2, 1, r5, s3, 8, t4, TicketStatus.CLOSED, 30},</span>
+<span class="nc" id="L146">            {&quot;Outlook ne s'ouvre plus&quot;, &quot;Depuis la mise à jour d'hier, Outlook se ferme immédiatement au lancement avec une erreur de profil.&quot;, &quot;EMAIL&quot;, 2, 2, r6, s4, 11, t3, TicketStatus.RESOLVED, 28},</span>
+<span class="nc" id="L147">            {&quot;Demande d'installation d'un logiciel de comptabilité&quot;, &quot;Merci d'installer Sage Compta sur le poste de la nouvelle comptable et de transférer la licence de l'ancien poste.&quot;, &quot;SOFTWARE&quot;, 3, 3, r1, s1, 0, t3, TicketStatus.CLOSED, 26},</span>
+<span class="nc" id="L148">            {&quot;Onduleur en alarme&quot;, &quot;L'onduleur de la salle serveur bipe en continu depuis la coupure de courant d'hier soir.&quot;, &quot;HARDWARE&quot;, 1, 1, r3, s2, 5, t2, TicketStatus.CLOSED, 25},</span>
+<span class="nc" id="L149">            {&quot;Création de compte pour un nouvel agent&quot;, &quot;Un nouvel agent commence lundi : créer compte Windows, messagerie et accès au logiciel d'assurance.&quot;, &quot;ACCOUNT&quot;, 3, 2, r6, s4, -1, t3, TicketStatus.CLOSED, 22},</span>
+<span class="nc" id="L150">            {&quot;Écran noir au démarrage du PC d'accueil&quot;, &quot;Le poste de l'accueil ne démarre plus : les voyants s'allument mais l'écran reste noir.&quot;, &quot;HARDWARE&quot;, 2, 2, r5, s3, 8, t5, TicketStatus.CLOSED, 20},</span>
+<span class="nc" id="L151">            {&quot;Routeur redémarre tout seul&quot;, &quot;Le routeur de la clinique redémarre plusieurs fois par jour, ce qui coupe le dossier patient informatisé.&quot;, &quot;NETWORK&quot;, 1, 1, r5, s3, 10, t1, TicketStatus.RESOLVED, 18},</span>
+<span class="nc" id="L152">            {&quot;Accès VPN pour télétravail&quot;, &quot;Je souhaite pouvoir accéder au réseau de l'agence depuis mon domicile deux jours par semaine.&quot;, &quot;NETWORK&quot;, 3, 3, r2, s1, -1, t1, TicketStatus.CLOSED, 16},</span>
+<span class="nc" id="L153">            {&quot;Imprimante EcoTank : traits sur les impressions&quot;, &quot;Les impressions couleur présentent des traînées et des traits horizontaux depuis une semaine.&quot;, &quot;HARDWARE&quot;, 3, 3, r6, s4, 13, t2, TicketStatus.RESOLVED, 14},</span>
+<span class="nc" id="L154">            {&quot;Sauvegarde en échec depuis 3 nuits&quot;, &quot;Le rapport de sauvegarde indique « destination inaccessible » depuis trois nuits consécutives.&quot;, &quot;SERVER&quot;, 1, 2, r4, s2, 4, t1, TicketStatus.CLOSED, 12},</span>
+<span class="nc" id="L155">            {&quot;Excel plante à l'ouverture d'un fichier&quot;, &quot;Un fichier Excel de 40 Mo fait planter Excel à chaque ouverture, sur deux postes différents.&quot;, &quot;SOFTWARE&quot;, 2, 3, r1, s1, 1, t3, TicketStatus.IN_PROGRESS, 9},</span>
+<span class="nc" id="L156">            {&quot;Point d'accès atelier injoignable&quot;, &quot;La borne Wi-Fi de l'atelier n'apparaît plus ; les tablettes de pointage ne se connectent pas.&quot;, &quot;NETWORK&quot;, 1, 2, r3, s2, 7, t5, TicketStatus.IN_PROGRESS, 6},</span>
+<span class="nc" id="L157">            {&quot;Demande de deuxième écran&quot;, &quot;Merci de fournir et installer un second écran pour le poste de la gestionnaire sinistres.&quot;, &quot;HARDWARE&quot;, 3, 3, r6, s4, 11, t2, TicketStatus.ON_HOLD, 5},</span>
+<span class="nc" id="L158">            {&quot;Mot de passe messagerie expiré&quot;, &quot;Le webmail me demande de changer le mot de passe mais la page tourne indéfiniment.&quot;, &quot;EMAIL&quot;, 2, 2, r2, s1, -1, t3, TicketStatus.ASSIGNED, 3},</span>
+<span class="nc" id="L159">            {&quot;Lenteur générale du serveur&quot;, &quot;Les applications métiers hébergées sur le serveur sont lentes depuis deux jours, surtout l'après-midi.&quot;, &quot;SERVER&quot;, 2, 2, r4, s2, 4, t4, TicketStatus.ASSIGNED, 2},</span>
+<span class="nc" id="L160">            {&quot;Clavier qui ne répond plus&quot;, &quot;Le clavier du poste de consultation ne répond plus par intermittence.&quot;, &quot;HARDWARE&quot;, 3, 3, r5, s3, 8, null, TicketStatus.NEW, 1},</span>
+<span class="nc" id="L161">            {&quot;Impossible d'imprimer depuis le portable&quot;, &quot;Depuis mon portable, l'imprimante du service n'apparaît plus dans la liste alors qu'elle fonctionne pour les autres.&quot;, &quot;HARDWARE&quot;, 3, 2, demoReq, s1, 2, null, TicketStatus.NEW, 0},</span>
+<span class="nc" id="L162">            {&quot;Plusieurs postes infectés ? Pop-ups partout&quot;, &quot;Sur trois postes du guichet des fenêtres publicitaires s'ouvrent sans arrêt et l'antivirus affiche des alertes.&quot;, &quot;SECURITY&quot;, 1, 1, r1, s1, 0, null, TicketStatus.NEW, 0},</span>
+        };
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        for (Object[] d : data) {</span>
+<span class="nc" id="L165">            Ticket t = new Ticket();</span>
+<span class="nc" id="L166">            String catCode = (String) d[2];</span>
+<span class="nc" id="L167">            int impact = (int) d[3], urgency = (int) d[4];</span>
+<span class="nc" id="L168">            User req = (User) d[5];</span>
+<span class="nc" id="L169">            Site site = (Site) d[6];</span>
+<span class="nc" id="L170">            int eqIdx = (int) d[7];</span>
+<span class="nc" id="L171">            User tech = (User) d[8];</span>
+<span class="nc" id="L172">            TicketStatus st = (TicketStatus) d[9];</span>
+<span class="nc" id="L173">            int ageDays = (int) d[10];</span>
+
+<span class="nc" id="L175">            Instant created = now.minus(Duration.ofDays(ageDays)).minus(Duration.ofHours(rnd.nextInt(8)));</span>
+<span class="nc bnc" id="L176" title="All 4 branches missed.">            t.setType(&quot;SECURITY&quot;.equals(catCode) || impact &lt;= 2 ? TicketType.INCIDENT : TicketType.REQUEST);</span>
+<span class="nc bnc" id="L177" title="All 6 branches missed.">            if (((String) d[0]).startsWith(&quot;Demande&quot;) || ((String) d[0]).startsWith(&quot;Création&quot;) || ((String) d[0]).startsWith(&quot;Accès&quot;)) t.setType(TicketType.REQUEST);</span>
+<span class="nc" id="L178">            t.setReference(references.next(t.getType()));</span>
+<span class="nc" id="L179">            t.setTitle((String) d[0]); t.setDescription((String) d[1]);</span>
+<span class="nc" id="L180">            t.setCategory(cat.get(catCode)); t.setImpact((short) impact); t.setUrgency((short) urgency);</span>
+<span class="nc" id="L181">            t.setPriority(PriorityMatrix.compute(impact, urgency));</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">            t.setRequester(req); t.setSite(site); t.setEquipment(eqIdx &gt;= 0 ? eq.get(eqIdx) : null);</span>
+<span class="nc" id="L183">            t.setCreatedAt(created);</span>
+<span class="nc" id="L184">            slaService.applyDeadlines(t);</span>
+<span class="nc" id="L185">            t.setStatus(st);</span>
+<span class="nc" id="L186">            t.setAssignee(tech);</span>
+
+<span class="nc" id="L188">            SlaPolicy pol = slaService.policyFor(t.getPriority());</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">            if (st != TicketStatus.NEW) {</span>
+                // première prise en compte : généralement dans le délai, parfois en retard (réalisme des indicateurs)
+<span class="nc bnc" id="L191" title="All 2 branches missed.">                long respMin = Math.round(pol.getResponseMinutes() * (rnd.nextInt(10) &lt; 8 ? 0.3 + rnd.nextDouble() * 0.6 : 1.1 + rnd.nextDouble()));</span>
+<span class="nc" id="L192">                Instant first = created.plus(Duration.ofMinutes(respMin));</span>
+<span class="nc" id="L193">                t.setFirstResponseAt(first);</span>
+<span class="nc" id="L194">                t.setSlaResponseBreached(first.isAfter(t.getResponseDueAt()));</span>
+            }
+<span class="nc bnc" id="L196" title="All 4 branches missed.">            if (st == TicketStatus.RESOLVED || st == TicketStatus.CLOSED) {</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                long resMin = Math.round(pol.getResolutionMinutes() * (rnd.nextInt(10) &lt; 7 ? 0.3 + rnd.nextDouble() * 0.6 : 1.05 + rnd.nextDouble() * 0.6));</span>
+<span class="nc" id="L198">                Instant resolved = created.plus(Duration.ofMinutes(Math.max(resMin, 20)));</span>
+<span class="nc" id="L199">                t.setResolvedAt(resolved);</span>
+<span class="nc" id="L200">                t.setSlaResolutionBreached(resolved.isAfter(t.getResolutionDueAt()));</span>
+<span class="nc" id="L201">                t.setResolutionSummary(resolutionFor(catCode));</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">                if (st == TicketStatus.CLOSED) { t.setClosedAt(resolved.plus(Duration.ofHours(6 + rnd.nextInt(40)))); t.setSatisfactionScore((short) (3 + rnd.nextInt(3))); }</span>
+            }
+<span class="nc" id="L204">            t = tickets.save(t);</span>
+<span class="nc" id="L205">            history.save(TicketHistory.of(t, req, &quot;status&quot;, null, TicketStatus.NEW));</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">            if (tech != null) history.save(TicketHistory.of(t, manager, &quot;assignee&quot;, null, tech.getFullName()));</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">            if (st.ordinal() &gt;= TicketStatus.IN_PROGRESS.ordinal() &amp;&amp; st != TicketStatus.CANCELLED) {</span>
+<span class="nc" id="L208">                comment(t, tech, &quot;Prise en charge. Diagnostic en cours.&quot;, false);</span>
+            }
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            if (t.getResolvedAt() != null) comment(t, tech, t.getResolutionSummary(), false);</span>
+
+            // interventions sur site pour les tickets matériels/réseau pris en charge
+<span class="nc bnc" id="L213" title="All 8 branches missed.">            if (tech != null &amp;&amp; (&quot;HARDWARE&quot;.equals(catCode) || &quot;NETWORK&quot;.equals(catCode)) &amp;&amp; st != TicketStatus.NEW) {</span>
+<span class="nc" id="L214">                Intervention i = new Intervention();</span>
+<span class="nc" id="L215">                i.setTicket(t); i.setTechnician(tech); i.setMode(InterventionMode.ONSITE);</span>
+<span class="nc bnc" id="L216" title="All 4 branches missed.">                Instant startI = (st == TicketStatus.ASSIGNED || st == TicketStatus.ON_HOLD) ? now.plus(Duration.ofHours(20 + rnd.nextInt(48))) : created.plus(Duration.ofHours(3 + rnd.nextInt(10)));</span>
+<span class="nc" id="L217">                i.setScheduledStart(startI); i.setScheduledEnd(startI.plus(Duration.ofHours(2)));</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">                if (t.getResolvedAt() != null) { i.setStatus(InterventionStatus.DONE); i.setActualStart(startI); i.setActualEnd(startI.plus(Duration.ofMinutes(60 + rnd.nextInt(90)))); i.setReport(t.getResolutionSummary()); }</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                else if (st == TicketStatus.IN_PROGRESS) i.setStatus(InterventionStatus.IN_PROGRESS);</span>
+<span class="nc" id="L220">                interventions.save(i);</span>
+            }
+        }
+<span class="nc" id="L223">    }</span>
+
+    private String resolutionFor(String cat) {
+<span class="nc bnc" id="L226" title="All 8 branches missed.">        return switch (cat) {</span>
+<span class="nc" id="L227">            case &quot;HARDWARE&quot; -&gt; &quot;Composant défectueux identifié et remplacé ; tests de bon fonctionnement réalisés avec l'utilisateur.&quot;;</span>
+<span class="nc" id="L228">            case &quot;NETWORK&quot; -&gt; &quot;Configuration réseau corrigée (canal/DHCP/firmware) ; débit et stabilité vérifiés sur site.&quot;;</span>
+<span class="nc" id="L229">            case &quot;ACCOUNT&quot; -&gt; &quot;Compte déverrouillé et mot de passe réinitialisé après vérification d'identité.&quot;;</span>
+<span class="nc" id="L230">            case &quot;SERVER&quot; -&gt; &quot;Service redémarré, espace disque libéré et supervision renforcée ; sauvegarde relancée avec succès.&quot;;</span>
+<span class="nc" id="L231">            case &quot;SECURITY&quot; -&gt; &quot;Poste isolé et analysé, aucune infection active ; mots de passe changés et sensibilisation faite.&quot;;</span>
+<span class="nc" id="L232">            case &quot;EMAIL&quot; -&gt; &quot;Profil Outlook recréé ; messagerie fonctionnelle, archives conservées.&quot;;</span>
+<span class="nc" id="L233">            case &quot;SOFTWARE&quot; -&gt; &quot;Logiciel installé/réparé et licence transférée ; validation avec l'utilisateur.&quot;;</span>
+<span class="nc" id="L234">            default -&gt; &quot;Demande traitée et validée avec le demandeur.&quot;;</span>
+        };
+    }
+
+    private Site site(String name, String client, String address, String city, String phone) {
+<span class="nc" id="L239">        Site s = new Site(); s.setName(name); s.setClientName(client); s.setAddress(address); s.setCity(city); s.setContactPhone(phone);</span>
+<span class="nc" id="L240">        return sites.save(s);</span>
+    }
+
+    private User user(String name, String email, Role role, Site site, String skills, String hash) {
+<span class="nc" id="L244">        User u = new User(); u.setFullName(name); u.setEmail(email); u.setRole(role); u.setSite(site); u.setSkills(skills); u.setPasswordHash(hash);</span>
+<span class="nc" id="L245">        return users.save(u);</span>
+    }
+
+    private void article(String title, Category c, User author, String tags, String content) {
+<span class="nc" id="L249">        KnowledgeArticle a = new KnowledgeArticle(); a.setTitle(title); a.setCategory(c); a.setAuthor(author); a.setTags(tags); a.setContent(content); a.setPublished(true);</span>
+<span class="nc" id="L250">        articles.save(a);</span>
+<span class="nc" id="L251">    }</span>
+
+    private void comment(Ticket t, User author, String content, boolean internal) {
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (author == null) return;</span>
+<span class="nc" id="L255">        TicketComment c = new TicketComment(); c.setTicket(t); c.setAuthor(author); c.setContent(content); c.setInternal(internal);</span>
+<span class="nc" id="L256">        comments.save(c);</span>
+<span class="nc" id="L257">    }</span>
+
+    /** Petite indirection pour exécuter le chargement dans une transaction (les appels internes ne sont pas proxifiés). */
+    @Component
+<span class="fc" id="L261">    public static class SeedTransaction {</span>
+        @Transactional
+<span class="nc" id="L263">        public void run(Runnable r) { r.run(); }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

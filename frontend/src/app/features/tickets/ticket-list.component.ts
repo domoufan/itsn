@@ -14,14 +14,16 @@ import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Page, STATUS_LABELS, TicketSummary } from '../../core/models';
 import { DueInPipe, PriorityLabelPipe, StatusLabelPipe } from '../../core/pipes';
+import { EmptyComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-ticket-list',
-  imports: [DatePipe, FormsModule, RouterLink, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatCheckboxModule, StatusLabelPipe, PriorityLabelPipe, DueInPipe],
+  imports: [DatePipe, FormsModule, RouterLink, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatCheckboxModule, StatusLabelPipe, PriorityLabelPipe, DueInPipe, EmptyComponent],
+  styles: ['.ref { color: var(--itsn-green-700); }'],
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>Tickets</h1>
+        <div><h1>Tickets</h1><p class="subtitle">{{ page().totalElements }} ticket(s) correspondant aux filtres</p></div>
         <a mat-flat-button color="primary" routerLink="/tickets/new"><mat-icon>add</mat-icon> Nouveau ticket</a>
       </div>
       <div class="toolbar-row">
@@ -50,7 +52,7 @@ import { DueInPipe, PriorityLabelPipe, StatusLabelPipe } from '../../core/pipes'
       </div>
 
       <table mat-table [dataSource]="page().content">
-        <ng-container matColumnDef="reference"><th mat-header-cell *matHeaderCellDef>Référence</th><td mat-cell *matCellDef="let t" class="mono">{{ t.reference }}</td></ng-container>
+        <ng-container matColumnDef="reference"><th mat-header-cell *matHeaderCellDef>Référence</th><td mat-cell *matCellDef="let t" class="mono ref">{{ t.reference }}</td></ng-container>
         <ng-container matColumnDef="title"><th mat-header-cell *matHeaderCellDef>Titre</th><td mat-cell *matCellDef="let t">{{ t.title }}<div class="small muted">{{ t.category?.name }} · {{ t.site?.name }}</div></td></ng-container>
         <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priorité</th><td mat-cell *matCellDef="let t"><span class="badge prio-{{ t.priority }}">{{ t.priority }}</span></td></ng-container>
         <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>État</th><td mat-cell *matCellDef="let t"><span class="badge st-{{ t.status }}">{{ t.status | statusLabel }}</span></td></ng-container>
@@ -64,7 +66,7 @@ import { DueInPipe, PriorityLabelPipe, StatusLabelPipe } from '../../core/pipes'
           </td></ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let t; columns: columns" class="clickable" (click)="open(t)"></tr>
-        <tr class="mat-row" *matNoDataRow><td class="mat-cell muted" [attr.colspan]="columns.length" style="padding:24px;text-align:center">Aucun ticket ne correspond aux critères</td></tr>
+        <tr class="mat-row" *matNoDataRow><td class="mat-cell" [attr.colspan]="columns.length"><itsn-empty title="Aucun ticket" text="Aucun ticket ne correspond aux critères choisis." /></td></tr>
       </table>
       <mat-paginator [length]="page().totalElements" [pageSize]="pageSize" [pageIndex]="page().number" [pageSizeOptions]="[10, 20, 50]" (page)="onPage($event)" />
     </div>

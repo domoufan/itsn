@@ -1,45 +1,176 @@
-/* Styles globaux IntervIT */
-html, body { height: 100%; margin: 0; }
-body { font-family: Roboto, "Helvetica Neue", sans-serif; background: #f4f6fa; color: #1f2933; }
+// =====================================================================
+// ITSN — Charte graphique et système de design
+// Palette inspirée de l'univers ServiceNow : vert « Now » lumineux sur bleu nuit profond.
+// =====================================================================
+@use '@angular/material' as mat;
+// Polices et icônes auto-hébergées (fonctionnement sans accès à Google Fonts)
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import 'material-icons/iconfont/material-icons.css';
 
-.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
-.page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h1 { font-size: 1.5rem; font-weight: 500; margin: 0; }
-.toolbar-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-.grid { display: grid; gap: 16px; }
-.grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-.grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-.muted { color: #616e7c; }
-.small { font-size: 0.85rem; }
+:root {
+  // Couleurs de marque
+  --itsn-navy-900: #021C2A;
+  --itsn-navy-800: #032D42;
+  --itsn-navy-700: #0A4257;
+  --itsn-green-900: #0B3D2E;
+  --itsn-green-700: #166B45;
+  --itsn-green-600: #1A8A50;
+  --itsn-green-500: #1F9D5A;   // primaire (contraste AA sur blanc)
+  --itsn-green-400: #3CC57A;
+  --itsn-green-300: #62D84E;   // accent lumineux « Now green »
+  --itsn-green-100: #DDF5E6;
+  --itsn-green-50:  #F0FAF4;
+  --itsn-mint:      #81B5A1;
+  // Neutres
+  --itsn-bg:        #F3F7F5;
+  --itsn-surface:   #FFFFFF;
+  --itsn-line:      #E2EBE6;
+  --itsn-text:      #14262E;
+  --itsn-text-2:    #4F6570;
+  --itsn-text-3:    #8A9BA3;
+  // Sémantique
+  --itsn-p1: #D64545; --itsn-p1-bg: #FCE8E8;
+  --itsn-p2: #E8912D; --itsn-p2-bg: #FFF1E0;
+  --itsn-p3: #2F80ED; --itsn-p3-bg: #E6F0FD;
+  --itsn-p4: #27AE60; --itsn-p4-bg: #E4F7EC;
+  // Formes et ombres
+  --itsn-radius: 14px;
+  --itsn-radius-sm: 10px;
+  --itsn-shadow-1: 0 1px 2px rgba(3,45,66,.06), 0 4px 14px rgba(3,45,66,.06);
+  --itsn-shadow-2: 0 6px 24px rgba(3,45,66,.14);
+  // Mouvement
+  --itsn-ease: cubic-bezier(.2,.8,.2,1);
+  --itsn-fast: 160ms; --itsn-med: 320ms; --itsn-slow: 600ms;
+}
+
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: (primary: mat.$green-palette, tertiary: mat.$cyan-palette),
+    typography: (plain-family: 'Inter, "Segoe UI", Roboto, sans-serif', brand-family: 'Inter, "Segoe UI", Roboto, sans-serif'),
+    density: 0,
+  ));
+  // Alignement des jetons Material sur la charte
+  --mat-sys-primary: var(--itsn-green-500);
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: var(--itsn-green-100);
+  --mat-sys-on-primary-container: var(--itsn-green-900);
+  --mat-sys-secondary: var(--itsn-navy-800);
+  --mat-sys-surface: var(--itsn-surface);
+  --mat-sys-background: var(--itsn-bg);
+  --mat-sys-on-surface: var(--itsn-text);
+  --mat-sys-outline-variant: var(--itsn-line);
+  --mat-sys-corner-medium: var(--itsn-radius-sm);
+  --mat-sys-corner-large: var(--itsn-radius);
+}
+
+html, body { height: 100%; margin: 0; }
+body { font-family: Inter, "Segoe UI", Roboto, sans-serif; background: var(--itsn-bg); color: var(--itsn-text); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { letter-spacing: -.01em; }
+a { color: var(--itsn-green-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+mat-icon.material-icons { font-family: 'Material Icons Round' !important; }
+
+// ---------------------------------------------------------------- mise en page
+.page { padding: 28px 32px 48px; max-width: 1440px; margin: 0 auto; animation: pageIn var(--itsn-slow) var(--itsn-ease) both; }
+.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.page-header h1 { font-size: 1.7rem; font-weight: 700; margin: 0; color: var(--itsn-navy-800); }
+.page-header .subtitle { color: var(--itsn-text-2); margin: 4px 0 0; }
+.toolbar-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.grid { display: grid; gap: 18px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.muted { color: var(--itsn-text-2); }
+.small { font-size: .85rem; }
 .spacer { flex: 1 1 auto; }
 .full { width: 100%; }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-table.mat-mdc-table { width: 100%; background: #fff; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-weight: 500; letter-spacing: .01em; }
 .clickable { cursor: pointer; }
-.clickable:hover { background: #eef2ff; }
-
-/* Badges de priorité et d'état */
-.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; letter-spacing: .3px; white-space: nowrap; }
-.prio-P1 { background: #fde2e1; color: #a61b1b; }
-.prio-P2 { background: #ffe9cc; color: #a65300; }
-.prio-P3 { background: #e0ecff; color: #1d4ed8; }
-.prio-P4 { background: #e6f4ea; color: #137333; }
-.st-NEW { background: #ede9fe; color: #5b21b6; }
-.st-ASSIGNED { background: #e0ecff; color: #1d4ed8; }
-.st-IN_PROGRESS { background: #fff3c4; color: #8a5a00; }
-.st-ON_HOLD { background: #f1f5f9; color: #475569; }
-.st-RESOLVED { background: #d1fae5; color: #065f46; }
-.st-CLOSED { background: #e5e7eb; color: #374151; }
-.st-CANCELLED { background: #fee2e2; color: #7f1d1d; }
-.st-PENDING { background: #fff3c4; color: #8a5a00; }
-.st-ACCEPTED, .st-DONE { background: #d1fae5; color: #065f46; }
-.st-PARTIAL, .st-PLANNED { background: #e0ecff; color: #1d4ed8; }
-.st-REJECTED, .st-FAILED { background: #fee2e2; color: #7f1d1d; }
-.sla-breach { color: #b91c1c; font-weight: 600; }
-
-.kpi-card { padding: 16px; }
-.kpi-value { font-size: 2rem; font-weight: 600; line-height: 1.1; }
-.kpi-label { color: #616e7c; font-size: 0.85rem; }
-
+.pre { white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 16px; }
-.pre { white-space: pre-wrap; word-break: break-word; }
+
+// ---------------------------------------------------------------- cartes et tableaux
+mat-card, .mat-mdc-card { border-radius: var(--itsn-radius) !important; box-shadow: var(--itsn-shadow-1) !important; border: 1px solid var(--itsn-line); background: var(--itsn-surface); transition: transform var(--itsn-med) var(--itsn-ease), box-shadow var(--itsn-med) var(--itsn-ease); }
+.lift:hover { transform: translateY(-3px); box-shadow: var(--itsn-shadow-2) !important; }
+.mat-mdc-card-title { font-weight: 700 !important; color: var(--itsn-navy-800); font-size: 1.05rem !important; }
+.mat-mdc-card-subtitle { color: var(--itsn-text-2) !important; }
+
+table.mat-mdc-table { width: 100%; background: var(--itsn-surface); border-radius: var(--itsn-radius); overflow: hidden; box-shadow: var(--itsn-shadow-1); border: 1px solid var(--itsn-line); }
+.mat-mdc-header-row { background: linear-gradient(90deg, var(--itsn-navy-800), var(--itsn-navy-700)); }
+.mat-mdc-header-cell { color: #DCEEE4 !important; font-weight: 600 !important; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: none !important; }
+.mat-mdc-row { transition: background var(--itsn-fast), box-shadow var(--itsn-fast); position: relative; }
+.mat-mdc-row.clickable:hover { background: var(--itsn-green-50); box-shadow: inset 4px 0 0 var(--itsn-green-400); }
+.mat-mdc-cell { border-bottom-color: var(--itsn-line) !important; }
+.mat-mdc-row { animation: rowIn var(--itsn-med) var(--itsn-ease) both; }
+@for $i from 1 through 20 { .mat-mdc-row:nth-child(#{$i}) { animation-delay: #{$i * 28}ms; } }
+
+// ---------------------------------------------------------------- badges
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px; border-radius: 999px; font-size: .76rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap; line-height: 1.4; }
+.badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .9; }
+.prio-P1 { background: var(--itsn-p1-bg); color: var(--itsn-p1); }
+.prio-P1::before { animation: pulse 1.6s ease-in-out infinite; }
+.prio-P2 { background: var(--itsn-p2-bg); color: var(--itsn-p2); }
+.prio-P3 { background: var(--itsn-p3-bg); color: var(--itsn-p3); }
+.prio-P4 { background: var(--itsn-p4-bg); color: var(--itsn-p4); }
+.st-NEW { background: #EEE8FD; color: #6B3FD6; }
+.st-ASSIGNED { background: var(--itsn-p3-bg); color: var(--itsn-p3); }
+.st-IN_PROGRESS { background: #FFF4D6; color: #9A6400; }
+.st-ON_HOLD { background: #EEF2F4; color: #5B6B75; }
+.st-RESOLVED { background: var(--itsn-green-100); color: var(--itsn-green-700); }
+.st-CLOSED { background: #E6EAEC; color: #3E4F58; }
+.st-CANCELLED { background: var(--itsn-p1-bg); color: #8E2B2B; }
+.st-PENDING { background: #FFF4D6; color: #9A6400; }
+.st-ACCEPTED, .st-DONE { background: var(--itsn-green-100); color: var(--itsn-green-700); }
+.st-PARTIAL, .st-PLANNED { background: var(--itsn-p3-bg); color: var(--itsn-p3); }
+.st-REJECTED, .st-FAILED { background: var(--itsn-p1-bg); color: #8E2B2B; }
+.sla-breach { color: var(--itsn-p1); font-weight: 600; }
+
+// ---------------------------------------------------------------- composants maison
+.kpi-card { padding: 18px 20px; position: relative; overflow: hidden; }
+.kpi-card::after { content: ''; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, var(--itsn-green-100), transparent 70%); opacity: .9; }
+.kpi-value { font-size: 2.1rem; font-weight: 800; line-height: 1.05; color: var(--itsn-navy-800); font-variant-numeric: tabular-nums; }
+.kpi-label { color: var(--itsn-text-2); font-size: .82rem; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.kpi-icon { position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--itsn-green-100); color: var(--itsn-green-700); }
+.kpi-icon.warn { background: var(--itsn-p2-bg); color: var(--itsn-p2); }
+.kpi-icon.danger { background: var(--itsn-p1-bg); color: var(--itsn-p1); }
+.kpi-icon.info { background: var(--itsn-p3-bg); color: var(--itsn-p3); }
+
+.stagger > * { animation: cardIn var(--itsn-slow) var(--itsn-ease) both; }
+@for $i from 1 through 12 { .stagger > *:nth-child(#{$i}) { animation-delay: #{60 + $i * 55}ms; } }
+
+.empty { text-align: center; padding: 40px 16px; color: var(--itsn-text-2); }
+.empty svg { width: 120px; height: 120px; margin-bottom: 8px; }
+.empty strong { display: block; color: var(--itsn-navy-800); font-size: 1.05rem; margin-bottom: 4px; }
+
+.skeleton { background: linear-gradient(90deg, #EEF3F0 25%, #F7FAF8 50%, #EEF3F0 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; border-radius: 8px; height: 14px; }
+
+.chip-soft { background: var(--itsn-green-50); border: 1px solid var(--itsn-green-100); color: var(--itsn-green-700); border-radius: 999px; padding: 4px 12px; font-size: .8rem; font-weight: 600; }
+
+// boutons
+.mat-mdc-unelevated-button.mat-primary, .mat-mdc-raised-button.mat-primary { background: linear-gradient(135deg, var(--itsn-green-500), var(--itsn-green-400)) !important; color: #fff !important; box-shadow: 0 6px 16px rgba(31,157,90,.28); transition: transform var(--itsn-fast), box-shadow var(--itsn-fast), filter var(--itsn-fast); }
+.mat-mdc-unelevated-button.mat-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(31,157,90,.34); filter: saturate(1.1); }
+.mat-mdc-outlined-button { border-color: var(--itsn-line) !important; transition: background var(--itsn-fast), transform var(--itsn-fast); }
+.mat-mdc-outlined-button:hover { background: var(--itsn-green-50); }
+.mat-mdc-button-base { border-radius: 10px !important; font-weight: 600 !important; }
+.mat-mdc-snack-bar-container .mdc-snackbar__surface { border-radius: 12px !important; }
+.snack-error .mdc-snackbar__surface { background: #3B1E1E !important; }
+
+// ---------------------------------------------------------------- animations
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.6); opacity: .4; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes floatY { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-18px) rotate(6deg); } }
+@keyframes growBar { from { width: 0; } }
+@keyframes dash { from { stroke-dashoffset: var(--dash, 300); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

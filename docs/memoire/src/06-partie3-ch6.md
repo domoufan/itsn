@@ -19,6 +19,7 @@ Tableau : Environnement de développement et versions utilisées
 | Node.js / npm | 22 / 10 | Outillage frontend |
 | Angular (CLI, cœur, Material, CDK) | 22.2 | Application cliente |
 | Vitest | 5 | Tests unitaires frontend |
+| @fontsource/inter, @fontsource/jetbrains-mono, material-icons | 5.x / 1.x | Polices et icônes auto-hébergées |
 | Docker / docker compose | 27 / v2 | Conteneurisation, environnement local complet |
 | Mailpit | dernière | Capture des e-mails en développement |
 | Git / GitHub | — | Versions, intégration continue, registre d'images |
@@ -30,9 +31,9 @@ Tableau : Environnement de développement et versions utilisées
 Le dépôt unique (*monorepo*) regroupe le code, l'infrastructure, les outils et la documentation, ce qui permet de livrer et de versionner l'ensemble de manière cohérente.
 
 ```
-intervit/
+itsn/
 ├── backend/                 API Spring Boot (pom.xml, Dockerfile)
-│   └── src/main/java/sn/senetech/intervit/
+│   └── src/main/java/sn/senetech/itsn/
 │       ├── config/          sécurité, propriétés, OpenAPI
 │       ├── auth/            connexion JWT, utilisateur courant
 │       ├── domain/          entités JPA et énumérations
@@ -147,21 +148,29 @@ L'application Angular suit une organisation par fonctionnalités, chargées pare
 
 Le gabarit (`ShellComponent`) filtre la navigation selon le rôle, mais **cette restriction d'interface n'est jamais considérée comme une protection** : toutes les règles sont réappliquées par le serveur (ENF-02). La fiche ticket calcule les actions affichées à partir de la liste `allowedTransitions` renvoyée par l'API, croisée avec le rôle courant, afin que l'utilisateur ne voie que les transitions qu'il a le droit d'effectuer.
 
+### Charte graphique et composants d'interface
+
+La charte du chapitre 4 est implémentée dans un fichier de styles unique (`styles.scss`) qui déclare les jetons de conception (couleurs, rayons, ombres, durées) sous forme de variables CSS, configure le thème Material 3 et aligne ses jetons système sur la charte. Des composants maison complètent Angular Material : logo, compteur animé (`countUp`), anneau de progression (`itsn-ring`), graphique en anneau (`itsn-donut`), état vide illustré (`itsn-empty`). Les polices et les icônes sont embarquées dans l'application (paquets `@fontsource/inter`, `@fontsource/jetbrains-mono`, `material-icons`), ce qui garantit un rendu identique sans accès à Internet au-delà du serveur de l'application.
+
 ### Captures d'écran des fonctionnalités importantes
 
-> Les captures ci-dessous seront insérées à partir de l'application exécutée avec le jeu de données fictives (aucune donnée réelle). Chaque capture est numérotée et commentée.
+Les captures ci-dessous ont été réalisées le 10 novembre 2026 sur l'application exécutée localement avec le jeu de données fictives (aucune donnée réelle).
 
-![Écran de connexion avec rappel des comptes de démonstration (capture à insérer)](placeholder:écran_de_connexion)
+![Écran de connexion : présentation du produit, formulaire et raccourcis vers les comptes de démonstration (capture du 10/11/2026)](../captures/01-connexion.png)
 
-![Liste des tickets avec filtres, badges de priorité et d'état, indicateur de dépassement SLA (capture à insérer)](placeholder:liste_des_tickets)
+![Tableau de bord du responsable : indicateurs animés, anneaux de respect des SLA, répartition par priorité, charge des techniciens, catégories (capture du 10/11/2026)](../captures/02-tableau-de-bord.png)
 
-![Fiche d'un ticket : informations, engagements SLA, actions selon le rôle, onglets commentaires / interventions / triage IA / historique (capture à insérer)](placeholder:fiche_ticket)
+![Liste des tickets : filtres, badges de priorité et d'état, échéance de résolution en temps restant, indicateur de dépassement (capture du 10/11/2026)](../captures/03-liste-tickets.png)
 
-![File de revue des propositions de l'agent IA : comparaison valeurs actuelles / proposées, décision partielle (capture à insérer)](placeholder:revue_IA)
+![Fiche d'un ticket : fil d'étapes du cycle de vie, engagements SLA, actions selon le rôle, onglets commentaires / interventions / triage IA / historique (capture du 10/11/2026)](../captures/04-fiche-ticket.png)
 
-![Tableau de bord : indicateurs, répartition par priorité, charge des techniciens (capture à insérer)](placeholder:tableau_de_bord)
+![File de revue des propositions de l'agent IA : état du pipeline (IA ou repli), budget du jour, comparaison valeurs actuelles / proposées, décision totale, partielle ou rejet (capture du 10/11/2026)](../captures/05-revue-ia.png)
 
-![Planning hebdomadaire des interventions et formulaire de compte rendu (capture à insérer)](placeholder:planning)
+![Planning hebdomadaire des interventions par technicien (capture du 10/11/2026)](../captures/06-planning.png)
+
+![Formulaire de création d'un ticket avec priorité calculée en direct (capture du 10/11/2026)](../captures/09-nouveau-ticket.png)
+
+![Administration : comptes, sites clients et politiques SLA (capture du 10/11/2026)](../captures/10-administration.png)
 
 ## Validation des entrées, gestion des erreurs, rôles et secrets
 
@@ -206,7 +215,10 @@ Tableau : Difficultés rencontrées et solutions apportées
 | Un appel interne à une méthode annotée `@Transactional` ou `@Async` n'est pas intercepté par le proxy Spring | Introduction d'un composant dédié (`SeedTransaction`) et envoi synchrone tolérant aux pannes pour les notifications |
 | Le modèle d'IA peut renvoyer le JSON final entouré de texte ou de balises de code | Extraction robuste (`extractJson`) testée unitairement (TU-04) |
 | Diagrammes Mermaid : certains caractères (parenthèses, balises) provoquent des erreurs d'analyse | Reformulation des libellés ; sources versionnées dans `docs/diagrams/` |
-| Accès réseau restreint de l'environnement d'assistance IA (dépôt Maven inaccessible) | Compilation et tests du backend exécutés sur le poste de l'étudiant et en intégration continue ; corrections itératives |
+| Jackson 3 (Spring Boot 4) refuse une valeur `null` pour un champ `boolean` primitif : les clients qui omettent un champ facultatif (`internal`, `applyCategory`…) recevaient une erreur 500 | Champs facultatifs déclarés en `Boolean` avec valeur par défaut `false` ; erreur de corps illisible renvoyée en 400 explicite (`HttpMessageNotReadableException`) |
+| L'indicateur de santé du serveur de messagerie rendait toute l'application « DOWN » (503) lorsque le SMTP était injoignable | Indicateur mail désactivé (`management.health.mail.enabled=false`) : une panne de messagerie ne doit pas être confondue avec une panne de l'application |
+| Accès réseau restreint de l'environnement d'assistance IA (dépôt Maven d'abord inaccessible) | Autorisation du domaine Maven Central ; compilation et tests exécutés le 10/11/2026 (40 tests réussis) |
+| Google Fonts injoignable dans certains réseaux : icônes et polices absentes | Polices et icônes auto-hébergées dans le bundle Angular |
 
 ## Réalisations personnelles, composants tiers et éléments assistés par IA
 
@@ -230,4 +242,5 @@ Tableau : État de réalisation des fonctionnalités
 | Base de connaissances | Réalisée | Recherche par correspondance de texte simple, pas de recherche sémantique |
 | Tableau de bord | Réalisée | Indicateurs calculés à la demande ; pas d'export PDF |
 | Agent de triage IA et revue humaine | Réalisée (évaluation au chapitre 7) | Dépend d'un service externe ; repli heuristique volontairement rudimentaire |
+| Charte graphique, animations, composants de visualisation | Réalisée | Pas de mode sombre ; accessibilité clavier non auditée formellement |
 | CI/CD et déploiement cloud | Réalisée (état précis au chapitre 8) | Offres gratuites : mise en veille, pas de garantie de disponibilité |

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KnowledgeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.kb</a> &gt; <span class="el_source">KnowledgeController.java</span></div><h1>KnowledgeController.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.kb;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+import sn.senetech.itsn.auth.CurrentUserService;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.KnowledgeArticle;
+import sn.senetech.itsn.repository.CategoryRepository;
+import sn.senetech.itsn.repository.KnowledgeArticleRepository;
+
+import java.time.Instant;
+
+/** Base de connaissances : procédures et solutions réutilisables, consultables par tous les utilisateurs. */
+@RestController
+@RequestMapping(&quot;/api/kb/articles&quot;)
+public class KnowledgeController {
+
+<span class="nc" id="L26">    public record ArticleRequest(@NotBlank @Size(max = 160) String title, @NotBlank @Size(max = 20000) String content,</span>
+                                 Long categoryId, @Size(max = 255) String tags, boolean published) {}
+
+<span class="nc" id="L29">    public record ArticleResponse(Long id, String title, String content, Long categoryId, String categoryName, String tags,</span>
+                                  String authorName, boolean published, int views, Instant createdAt, Instant updatedAt) {
+        static ArticleResponse from(KnowledgeArticle a) {
+<span class="nc" id="L32">            return new ArticleResponse(a.getId(), a.getTitle(), a.getContent(),</span>
+<span class="nc bnc" id="L33" title="All 4 branches missed.">                a.getCategory() == null ? null : a.getCategory().getId(), a.getCategory() == null ? null : a.getCategory().getName(),</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">                a.getTags(), a.getAuthor() == null ? null : a.getAuthor().getFullName(), a.isPublished(), a.getViews(), a.getCreatedAt(), a.getUpdatedAt());</span>
+        }
+    }
+
+    private final KnowledgeArticleRepository articles;
+    private final CategoryRepository categories;
+    private final CurrentUserService currentUser;
+
+<span class="fc" id="L42">    public KnowledgeController(KnowledgeArticleRepository articles, CategoryRepository categories, CurrentUserService currentUser) {</span>
+<span class="fc" id="L43">        this.articles = articles; this.categories = categories; this.currentUser = currentUser;</span>
+<span class="fc" id="L44">    }</span>
+
+    @GetMapping
+    public Page&lt;ArticleResponse&gt; search(@RequestParam(required = false) String q, @RequestParam(defaultValue = &quot;0&quot;) int page,
+                                        @RequestParam(defaultValue = &quot;20&quot;) int size) {
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        boolean publishedOnly = !currentUser.isStaff();</span>
+<span class="nc bnc" id="L50" title="All 4 branches missed.">        String term = (q == null || q.isBlank()) ? null : q.trim();</span>
+<span class="nc" id="L51">        return articles.search(term, publishedOnly, PageRequest.of(page, Math.min(size, 50))).map(ArticleResponse::from);</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @Transactional
+    public ArticleResponse get(@PathVariable Long id) {
+<span class="nc" id="L57">        KnowledgeArticle a = articles.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Article&quot;, id));</span>
+<span class="nc bnc" id="L58" title="All 4 branches missed.">        if (!a.isPublished() &amp;&amp; !currentUser.isStaff()) throw new AccessDeniedException(&quot;Article non publié&quot;);</span>
+<span class="nc" id="L59">        a.incrementViews();</span>
+<span class="nc" id="L60">        return ArticleResponse.from(a);</span>
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','MANAGER','TECHNICIAN')&quot;)
+    public ArticleResponse create(@Valid @RequestBody ArticleRequest req) {
+<span class="nc" id="L67">        KnowledgeArticle a = new KnowledgeArticle();</span>
+<span class="nc" id="L68">        a.setAuthor(currentUser.currentUser());</span>
+<span class="nc" id="L69">        apply(a, req);</span>
+<span class="nc" id="L70">        return ArticleResponse.from(articles.save(a));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','MANAGER','TECHNICIAN')&quot;)
+    public ArticleResponse update(@PathVariable Long id, @Valid @RequestBody ArticleRequest req) {
+<span class="nc" id="L76">        KnowledgeArticle a = articles.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Article&quot;, id));</span>
+<span class="nc" id="L77">        apply(a, req);</span>
+<span class="nc" id="L78">        return ArticleResponse.from(articles.save(a));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','MANAGER')&quot;)
+    public void delete(@PathVariable Long id) {
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (!articles.existsById(id)) throw new NotFoundException(&quot;Article&quot;, id);</span>
+<span class="nc" id="L85">        articles.deleteById(id);</span>
+<span class="nc" id="L86">    }</span>
+
+    private void apply(KnowledgeArticle a, ArticleRequest r) {
+<span class="nc" id="L89">        a.setTitle(r.title().trim()); a.setContent(r.content()); a.setTags(r.tags()); a.setPublished(r.published());</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        a.setCategory(r.categoryId() == null ? null : categories.findById(r.categoryId()).orElseThrow(() -&gt; new NotFoundException(&quot;Catégorie&quot;, r.categoryId())));</span>
+<span class="nc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

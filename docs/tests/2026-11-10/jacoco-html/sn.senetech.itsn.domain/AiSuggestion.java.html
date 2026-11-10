@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiSuggestion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.domain</a> &gt; <span class="el_source">AiSuggestion.java</span></div><h1>AiSuggestion.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.domain;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.Instant;
+
+/** Proposition produite par l'agent de triage. Jamais appliquée sans validation humaine. */
+@Entity
+@Table(name = &quot;ai_suggestions&quot;)
+<span class="fc" id="L10">public class AiSuggestion {</span>
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = &quot;ticket_id&quot;) private Ticket ticket;
+<span class="fc" id="L14">    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 12) private SuggestionStatus status = SuggestionStatus.PENDING;</span>
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = &quot;suggested_category_id&quot;) private Category suggestedCategory;
+    @Column(name = &quot;suggested_impact&quot;) private Short suggestedImpact;
+    @Column(name = &quot;suggested_urgency&quot;) private Short suggestedUrgency;
+    @Enumerated(EnumType.STRING) @Column(name = &quot;suggested_priority&quot;, length = 2) private Priority suggestedPriority;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = &quot;suggested_assignee_id&quot;) private User suggestedAssignee;
+    @Column(columnDefinition = &quot;text&quot;) private String summary;
+    @Column(columnDefinition = &quot;text&quot;) private String rationale;
+    @Column(name = &quot;related_article_ids&quot;) private String relatedArticleIds;
+    private String model;
+    @Column(name = &quot;tool_calls&quot;, nullable = false) private int toolCalls;
+    @Column(name = &quot;input_tokens&quot;, nullable = false) private int inputTokens;
+    @Column(name = &quot;output_tokens&quot;, nullable = false) private int outputTokens;
+    @Column(name = &quot;latency_ms&quot;, nullable = false) private int latencyMs;
+<span class="fc" id="L28">    @Column(name = &quot;estimated_cost_usd&quot;, nullable = false, precision = 10, scale = 6) private BigDecimal estimatedCostUsd = BigDecimal.ZERO;</span>
+    @Column(name = &quot;error_message&quot;) private String errorMessage;
+    @Column(name = &quot;raw_response&quot;, columnDefinition = &quot;text&quot;) private String rawResponse;
+<span class="fc" id="L31">    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false) private Instant createdAt = Instant.now();</span>
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = &quot;reviewed_by_id&quot;) private User reviewedBy;
+    @Column(name = &quot;reviewed_at&quot;) private Instant reviewedAt;
+    @Column(name = &quot;review_comment&quot;) private String reviewComment;
+
+<span class="fc" id="L36">    public Long getId() { return id; }</span>
+<span class="fc" id="L37">    public Ticket getTicket() { return ticket; }</span>
+<span class="fc" id="L38">    public void setTicket(Ticket ticket) { this.ticket = ticket; }</span>
+<span class="fc" id="L39">    public SuggestionStatus getStatus() { return status; }</span>
+<span class="fc" id="L40">    public void setStatus(SuggestionStatus status) { this.status = status; }</span>
+<span class="fc" id="L41">    public Category getSuggestedCategory() { return suggestedCategory; }</span>
+<span class="fc" id="L42">    public void setSuggestedCategory(Category c) { this.suggestedCategory = c; }</span>
+<span class="fc" id="L43">    public Short getSuggestedImpact() { return suggestedImpact; }</span>
+<span class="fc" id="L44">    public void setSuggestedImpact(Short v) { this.suggestedImpact = v; }</span>
+<span class="fc" id="L45">    public Short getSuggestedUrgency() { return suggestedUrgency; }</span>
+<span class="fc" id="L46">    public void setSuggestedUrgency(Short v) { this.suggestedUrgency = v; }</span>
+<span class="fc" id="L47">    public Priority getSuggestedPriority() { return suggestedPriority; }</span>
+<span class="fc" id="L48">    public void setSuggestedPriority(Priority p) { this.suggestedPriority = p; }</span>
+<span class="fc" id="L49">    public User getSuggestedAssignee() { return suggestedAssignee; }</span>
+<span class="fc" id="L50">    public void setSuggestedAssignee(User u) { this.suggestedAssignee = u; }</span>
+<span class="fc" id="L51">    public String getSummary() { return summary; }</span>
+<span class="fc" id="L52">    public void setSummary(String summary) { this.summary = summary; }</span>
+<span class="fc" id="L53">    public String getRationale() { return rationale; }</span>
+<span class="fc" id="L54">    public void setRationale(String rationale) { this.rationale = rationale; }</span>
+<span class="fc" id="L55">    public String getRelatedArticleIds() { return relatedArticleIds; }</span>
+<span class="nc" id="L56">    public void setRelatedArticleIds(String v) { this.relatedArticleIds = v; }</span>
+<span class="fc" id="L57">    public String getModel() { return model; }</span>
+<span class="fc" id="L58">    public void setModel(String model) { this.model = model; }</span>
+<span class="fc" id="L59">    public int getToolCalls() { return toolCalls; }</span>
+<span class="fc" id="L60">    public void setToolCalls(int toolCalls) { this.toolCalls = toolCalls; }</span>
+<span class="fc" id="L61">    public int getInputTokens() { return inputTokens; }</span>
+<span class="fc" id="L62">    public void setInputTokens(int inputTokens) { this.inputTokens = inputTokens; }</span>
+<span class="fc" id="L63">    public int getOutputTokens() { return outputTokens; }</span>
+<span class="fc" id="L64">    public void setOutputTokens(int outputTokens) { this.outputTokens = outputTokens; }</span>
+<span class="fc" id="L65">    public int getLatencyMs() { return latencyMs; }</span>
+<span class="fc" id="L66">    public void setLatencyMs(int latencyMs) { this.latencyMs = latencyMs; }</span>
+<span class="fc" id="L67">    public BigDecimal getEstimatedCostUsd() { return estimatedCostUsd; }</span>
+<span class="fc" id="L68">    public void setEstimatedCostUsd(BigDecimal v) { this.estimatedCostUsd = v; }</span>
+<span class="fc" id="L69">    public String getErrorMessage() { return errorMessage; }</span>
+<span class="nc" id="L70">    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }</span>
+<span class="nc" id="L71">    public String getRawResponse() { return rawResponse; }</span>
+<span class="fc" id="L72">    public void setRawResponse(String rawResponse) { this.rawResponse = rawResponse; }</span>
+<span class="fc" id="L73">    public Instant getCreatedAt() { return createdAt; }</span>
+<span class="fc" id="L74">    public User getReviewedBy() { return reviewedBy; }</span>
+<span class="fc" id="L75">    public void setReviewedBy(User reviewedBy) { this.reviewedBy = reviewedBy; }</span>
+<span class="fc" id="L76">    public Instant getReviewedAt() { return reviewedAt; }</span>
+<span class="fc" id="L77">    public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }</span>
+<span class="fc" id="L78">    public String getReviewComment() { return reviewComment; }</span>
+<span class="fc" id="L79">    public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

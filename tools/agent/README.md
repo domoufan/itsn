@@ -5,11 +5,11 @@ Ce dossier documente l'agent IA décrit à la section 8.5 du mémoire. Tout ce q
 
 | Élément | Emplacement |
 |---|---|
-| Instructions système (prompt) et règles d'orchestration | `backend/src/main/java/sn/senetech/intervit/ai/ClaudeTriageAgent.java` (`systemPrompt()`, `userPrompt()`) |
-| Outils en lecture seule exposés à l'agent et leur schéma JSON | `backend/src/main/java/sn/senetech/intervit/ai/TriageTools.java` |
-| Garde-fous (activation, budget journalier, repli, validation humaine) | `backend/src/main/java/sn/senetech/intervit/ai/AiSuggestionService.java` |
-| Solution de repli sans IA (simulation par mots clés) | `backend/src/main/java/sn/senetech/intervit/ai/HeuristicTriageAgent.java` |
-| Paramètres (modèle, jetons max, appels d'outils max, délai, budget, tarifs) | `backend/src/main/resources/application.yml` (bloc `intervit.ai`) |
+| Instructions système (prompt) et règles d'orchestration | `backend/src/main/java/sn/senetech/itsn/ai/ClaudeTriageAgent.java` (`systemPrompt()`, `userPrompt()`) |
+| Outils en lecture seule exposés à l'agent et leur schéma JSON | `backend/src/main/java/sn/senetech/itsn/ai/TriageTools.java` |
+| Garde-fous (activation, budget journalier, repli, validation humaine) | `backend/src/main/java/sn/senetech/itsn/ai/AiSuggestionService.java` |
+| Solution de repli sans IA (simulation par mots clés) | `backend/src/main/java/sn/senetech/itsn/ai/HeuristicTriageAgent.java` |
+| Paramètres (modèle, jetons max, appels d'outils max, délai, budget, tarifs) | `backend/src/main/resources/application.yml` (bloc `itsn.ai`) |
 | Jeu d'évaluation (30 cas dont 1 tentative de détournement) | `tools/eval/dataset_triage.json` |
 | Script d'évaluation (exactitude, latence, coût, variabilité) | `tools/eval/evaluate_triage.py` |
 

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TicketService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ticket</a> &gt; <span class="el_source">TicketService.java</span></div><h1>TicketService.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ticket;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sn.senetech.itsn.auth.CurrentUserService;
+import sn.senetech.itsn.common.AuditService;
+import sn.senetech.itsn.common.BusinessException;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.*;
+import sn.senetech.itsn.notification.NotificationService;
+import sn.senetech.itsn.repository.*;
+import sn.senetech.itsn.ticket.TicketDtos.*;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Règles métier du cycle de vie des tickets : création avec priorisation et SLA, affectation,
+ * transitions d'état contrôlées, commentaires, historique et contrôle d'accès par rôle.
+ */
+@Service
+@Transactional
+public class TicketService {
+
+    private final TicketRepository tickets;
+    private final TicketCommentRepository comments;
+    private final TicketHistoryRepository history;
+    private final UserRepository users;
+    private final CategoryRepository categories;
+    private final SiteRepository sites;
+    private final EquipmentRepository equipment;
+    private final SlaService slaService;
+    private final TicketReferenceService referenceService;
+    private final CurrentUserService currentUser;
+    private final NotificationService notifications;
+    private final AuditService audit;
+
+    public TicketService(TicketRepository tickets, TicketCommentRepository comments, TicketHistoryRepository history,
+                         UserRepository users, CategoryRepository categories, SiteRepository sites, EquipmentRepository equipment,
+                         SlaService slaService, TicketReferenceService referenceService, CurrentUserService currentUser,
+<span class="fc" id="L45">                         NotificationService notifications, AuditService audit) {</span>
+<span class="fc" id="L46">        this.tickets = tickets;</span>
+<span class="fc" id="L47">        this.comments = comments;</span>
+<span class="fc" id="L48">        this.history = history;</span>
+<span class="fc" id="L49">        this.users = users;</span>
+<span class="fc" id="L50">        this.categories = categories;</span>
+<span class="fc" id="L51">        this.sites = sites;</span>
+<span class="fc" id="L52">        this.equipment = equipment;</span>
+<span class="fc" id="L53">        this.slaService = slaService;</span>
+<span class="fc" id="L54">        this.referenceService = referenceService;</span>
+<span class="fc" id="L55">        this.currentUser = currentUser;</span>
+<span class="fc" id="L56">        this.notifications = notifications;</span>
+<span class="fc" id="L57">        this.audit = audit;</span>
+<span class="fc" id="L58">    }</span>
+
+    // ------------------------------------------------------------------ lecture
+
+    @Transactional(readOnly = true)
+    public Page&lt;TicketSummary&gt; search(TicketFilter filter, Pageable pageable) {
+<span class="fc" id="L64">        TicketFilter effective = filter;</span>
+<span class="fc" id="L65">        User me = currentUser.currentUser();</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (me.getRole() == Role.REQUESTER) {</span>
+            // Un demandeur ne voit que ses propres tickets, quel que soit le filtre demandé
+<span class="fc" id="L68">            effective = new TicketFilter(filter.status(), filter.priority(), filter.type(), null, me.getId(),</span>
+<span class="fc" id="L69">                filter.siteId(), filter.categoryId(), filter.openOnly(), filter.slaBreached(), filter.search());</span>
+        }
+<span class="fc" id="L71">        return tickets.findAll(TicketSpecifications.from(effective), pageable).map(TicketSummary::from);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public TicketResponse get(Long id) {
+<span class="fc" id="L76">        Ticket t = load(id);</span>
+<span class="fc" id="L77">        assertCanView(t, currentUser.currentUser());</span>
+<span class="fc" id="L78">        return TicketResponse.from(t);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;CommentResponse&gt; comments(Long ticketId) {
+<span class="fc" id="L83">        Ticket t = load(ticketId);</span>
+<span class="fc" id="L84">        User me = currentUser.currentUser();</span>
+<span class="fc" id="L85">        assertCanView(t, me);</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        List&lt;TicketComment&gt; list = me.getRole() == Role.REQUESTER</span>
+<span class="fc" id="L87">            ? comments.findByTicketIdAndInternalFalseOrderByCreatedAtAsc(ticketId)</span>
+<span class="pc" id="L88">            : comments.findByTicketIdOrderByCreatedAtAsc(ticketId);</span>
+<span class="fc" id="L89">        return list.stream().map(CommentResponse::from).toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;HistoryResponse&gt; history(Long ticketId) {
+<span class="fc" id="L94">        Ticket t = load(ticketId);</span>
+<span class="fc" id="L95">        assertCanView(t, currentUser.currentUser());</span>
+<span class="fc" id="L96">        return history.findByTicketIdOrderByChangedAtAsc(ticketId).stream().map(HistoryResponse::from).toList();</span>
+    }
+
+    // ------------------------------------------------------------------ création / modification
+
+    public TicketResponse create(CreateRequest req) {
+<span class="fc" id="L102">        User me = currentUser.currentUser();</span>
+<span class="fc" id="L103">        User requester = me;</span>
+<span class="pc bpc" id="L104" title="3 of 4 branches missed.">        if (req.requesterId() != null &amp;&amp; !req.requesterId().equals(me.getId())) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (!currentUser.isStaff()) throw new AccessDeniedException(&quot;Création pour un tiers réservée au personnel&quot;);</span>
+<span class="nc" id="L106">            requester = users.findById(req.requesterId()).orElseThrow(() -&gt; new NotFoundException(&quot;Utilisateur&quot;, req.requesterId()));</span>
+        }
+
+<span class="fc" id="L109">        Ticket t = new Ticket();</span>
+<span class="fc" id="L110">        t.setReference(referenceService.next(req.type()));</span>
+<span class="fc" id="L111">        t.setType(req.type());</span>
+<span class="fc" id="L112">        t.setTitle(req.title().trim());</span>
+<span class="fc" id="L113">        t.setDescription(req.description().trim());</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        t.setCategory(req.categoryId() == null ? defaultCategory() : loadCategory(req.categoryId()));</span>
+<span class="fc" id="L115">        t.setImpact(req.impact().shortValue());</span>
+<span class="fc" id="L116">        t.setUrgency(req.urgency().shortValue());</span>
+<span class="fc" id="L117">        t.setPriority(PriorityMatrix.compute(req.impact(), req.urgency()));</span>
+<span class="fc" id="L118">        t.setRequester(requester);</span>
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        t.setSite(req.siteId() != null ? loadSite(req.siteId()) : requester.getSite());</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        t.setEquipment(req.equipmentId() == null ? null : loadEquipment(req.equipmentId()));</span>
+<span class="fc" id="L121">        t.setStatus(TicketStatus.NEW);</span>
+<span class="fc" id="L122">        t.setCreatedAt(Instant.now());</span>
+<span class="fc" id="L123">        slaService.applyDeadlines(t);</span>
+
+<span class="fc" id="L125">        t = tickets.save(t);</span>
+<span class="fc" id="L126">        history.save(TicketHistory.of(t, me, &quot;status&quot;, null, TicketStatus.NEW));</span>
+<span class="fc" id="L127">        notifications.ticketCreated(t);</span>
+<span class="fc" id="L128">        return TicketResponse.from(t);</span>
+    }
+
+    public TicketResponse update(Long id, UpdateRequest req) {
+<span class="nc" id="L132">        Ticket t = load(id);</span>
+<span class="nc" id="L133">        User me = currentUser.currentUser();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (t.getStatus().isTerminal()) throw new BusinessException(&quot;Un ticket clôturé ou annulé ne peut plus être modifié&quot;);</span>
+<span class="nc" id="L135">        boolean staff = currentUser.isStaff();</span>
+<span class="nc bnc" id="L136" title="All 4 branches missed.">        if (!staff &amp;&amp; !isRequester(t, me)) throw new AccessDeniedException(&quot;Modification non autorisée&quot;);</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">        if (!staff &amp;&amp; t.getStatus() != TicketStatus.NEW) throw new BusinessException(&quot;Le demandeur ne peut modifier un ticket déjà pris en charge&quot;);</span>
+
+<span class="nc bnc" id="L139" title="All 4 branches missed.">        if (req.title() != null &amp;&amp; !req.title().equals(t.getTitle())) {</span>
+<span class="nc" id="L140">            history.save(TicketHistory.of(t, me, &quot;title&quot;, t.getTitle(), req.title()));</span>
+<span class="nc" id="L141">            t.setTitle(req.title().trim());</span>
+        }
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        if (req.description() != null) t.setDescription(req.description().trim());</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (req.categoryId() != null) {</span>
+<span class="nc" id="L145">            Category c = loadCategory(req.categoryId());</span>
+<span class="nc bnc" id="L146" title="All 4 branches missed.">            if (!Objects.equals(c.getId(), t.getCategory() == null ? null : t.getCategory().getId())) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                history.save(TicketHistory.of(t, me, &quot;category&quot;, t.getCategory() == null ? null : t.getCategory().getCode(), c.getCode()));</span>
+<span class="nc" id="L148">                t.setCategory(c);</span>
+            }
+        }
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (req.siteId() != null) t.setSite(loadSite(req.siteId()));</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (req.equipmentId() != null) t.setEquipment(loadEquipment(req.equipmentId()));</span>
+
+<span class="nc" id="L154">        boolean reprioritize = false;</span>
+<span class="nc bnc" id="L155" title="All 4 branches missed.">        if (req.impact() != null &amp;&amp; req.impact() != t.getImpact()) {</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">            if (!staff) throw new AccessDeniedException(&quot;Seul le personnel peut modifier l'impact&quot;);</span>
+<span class="nc" id="L157">            history.save(TicketHistory.of(t, me, &quot;impact&quot;, t.getImpact(), req.impact()));</span>
+<span class="nc" id="L158">            t.setImpact(req.impact().shortValue());</span>
+<span class="nc" id="L159">            reprioritize = true;</span>
+        }
+<span class="nc bnc" id="L161" title="All 4 branches missed.">        if (req.urgency() != null &amp;&amp; req.urgency() != t.getUrgency()) {</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            if (!staff) throw new AccessDeniedException(&quot;Seul le personnel peut modifier l'urgence&quot;);</span>
+<span class="nc" id="L163">            history.save(TicketHistory.of(t, me, &quot;urgency&quot;, t.getUrgency(), req.urgency()));</span>
+<span class="nc" id="L164">            t.setUrgency(req.urgency().shortValue());</span>
+<span class="nc" id="L165">            reprioritize = true;</span>
+        }
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (reprioritize) {</span>
+<span class="nc" id="L168">            Priority newPriority = PriorityMatrix.compute(t.getImpact(), t.getUrgency());</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (newPriority != t.getPriority()) {</span>
+<span class="nc" id="L170">                history.save(TicketHistory.of(t, me, &quot;priority&quot;, t.getPriority(), newPriority));</span>
+<span class="nc" id="L171">                t.setPriority(newPriority);</span>
+<span class="nc" id="L172">                slaService.applyDeadlines(t);</span>
+            }
+        }
+<span class="nc" id="L175">        return TicketResponse.from(tickets.save(t));</span>
+    }
+
+    /** Affectation (ou réaffectation) à un technicien : réservée aux responsables et administrateurs. */
+    public TicketResponse assign(Long id, AssignRequest req) {
+<span class="fc" id="L180">        Ticket t = load(id);</span>
+<span class="fc" id="L181">        User me = currentUser.currentUser();</span>
+<span class="pc bpc" id="L182" title="1 of 4 branches missed.">        if (!(currentUser.hasRole(Role.MANAGER) || currentUser.hasRole(Role.ADMIN))) {</span>
+<span class="fc" id="L183">            throw new AccessDeniedException(&quot;Affectation réservée au responsable support&quot;);</span>
+        }
+<span class="pc" id="L185">        User tech = users.findById(req.assigneeId()).orElseThrow(() -&gt; new NotFoundException(&quot;Utilisateur&quot;, req.assigneeId()));</span>
+<span class="pc bpc" id="L186" title="2 of 4 branches missed.">        if (tech.getRole() != Role.TECHNICIAN || !tech.isActive()) throw new BusinessException(&quot;L'utilisateur choisi n'est pas un technicien actif&quot;);</span>
+<span class="pc bpc" id="L187" title="2 of 4 branches missed.">        if (t.getStatus().isTerminal() || t.getStatus() == TicketStatus.RESOLVED) throw new BusinessException(&quot;Ticket non affectable dans l'état &quot; + t.getStatus());</span>
+
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        history.save(TicketHistory.of(t, me, &quot;assignee&quot;, t.getAssignee() == null ? null : t.getAssignee().getFullName(), tech.getFullName()));</span>
+<span class="fc" id="L190">        t.setAssignee(tech);</span>
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        if (t.getStatus() == TicketStatus.NEW) {</span>
+<span class="fc" id="L192">            transition(t, TicketStatus.ASSIGNED, me);</span>
+        }
+<span class="pc bpc" id="L194" title="2 of 4 branches missed.">        if (req.comment() != null &amp;&amp; !req.comment().isBlank()) addComment(t, me, req.comment(), true);</span>
+<span class="fc" id="L195">        t = tickets.save(t);</span>
+<span class="fc" id="L196">        notifications.ticketAssigned(t);</span>
+<span class="fc" id="L197">        audit.record(me.getId(), &quot;TICKET_ASSIGNED&quot;, &quot;TICKET&quot;, t.getId(), &quot;assignee=&quot; + tech.getId());</span>
+<span class="fc" id="L198">        return TicketResponse.from(t);</span>
+    }
+
+    public TicketResponse changeStatus(Long id, StatusChangeRequest req) {
+<span class="fc" id="L202">        Ticket t = load(id);</span>
+<span class="fc" id="L203">        User me = currentUser.currentUser();</span>
+<span class="fc" id="L204">        TicketStatus target = req.status();</span>
+<span class="fc" id="L205">        assertCanChangeStatus(t, me, target);</span>
+
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        if (target == TicketStatus.RESOLVED) {</span>
+<span class="pc bpc" id="L208" title="1 of 4 branches missed.">            if (req.resolutionSummary() == null || req.resolutionSummary().isBlank()) {</span>
+<span class="fc" id="L209">                throw new BusinessException(&quot;Un résumé de résolution est obligatoire pour résoudre un ticket&quot;);</span>
+            }
+<span class="fc" id="L211">            t.setResolutionSummary(req.resolutionSummary().trim());</span>
+        }
+<span class="fc" id="L213">        transition(t, target, me);</span>
+<span class="pc bpc" id="L214" title="1 of 4 branches missed.">        if (req.comment() != null &amp;&amp; !req.comment().isBlank()) {</span>
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">            addComment(t, me, req.comment(), me.getRole() != Role.REQUESTER);</span>
+        }
+<span class="fc" id="L217">        t = tickets.save(t);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (target == TicketStatus.RESOLVED) notifications.ticketResolved(t);</span>
+<span class="fc" id="L219">        return TicketResponse.from(t);</span>
+    }
+
+    public CommentResponse comment(Long id, CommentRequest req) {
+<span class="fc" id="L223">        Ticket t = load(id);</span>
+<span class="fc" id="L224">        User me = currentUser.currentUser();</span>
+<span class="fc" id="L225">        assertCanView(t, me);</span>
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">        if (t.getStatus().isTerminal()) throw new BusinessException(&quot;Impossible de commenter un ticket clôturé ou annulé&quot;);</span>
+<span class="nc bnc" id="L227" title="All 4 branches missed.">        boolean internal = req.isInternal() &amp;&amp; currentUser.isStaff(); // un demandeur ne peut pas créer de note interne</span>
+<span class="nc" id="L228">        TicketComment c = addComment(t, me, req.content(), internal);</span>
+<span class="nc" id="L229">        tickets.save(t);</span>
+<span class="nc" id="L230">        return CommentResponse.from(c);</span>
+    }
+
+    public TicketResponse rate(Long id, SatisfactionRequest req) {
+<span class="fc" id="L234">        Ticket t = load(id);</span>
+<span class="fc" id="L235">        User me = currentUser.currentUser();</span>
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        if (!isRequester(t, me)) throw new AccessDeniedException(&quot;Seul le demandeur peut évaluer la résolution&quot;);</span>
+<span class="pc bpc" id="L237" title="3 of 4 branches missed.">        if (t.getStatus() != TicketStatus.RESOLVED &amp;&amp; t.getStatus() != TicketStatus.CLOSED) {</span>
+<span class="nc" id="L238">            throw new BusinessException(&quot;L'évaluation n'est possible qu'après résolution&quot;);</span>
+        }
+<span class="fc" id="L240">        t.setSatisfactionScore(req.score().shortValue());</span>
+<span class="fc" id="L241">        return TicketResponse.from(tickets.save(t));</span>
+    }
+
+    // ------------------------------------------------------------------ règles internes
+
+    private void transition(Ticket t, TicketStatus target, User by) {
+<span class="fc" id="L247">        TicketStatus from = t.getStatus();</span>
+<span class="pc bpc" id="L248" title="2 of 4 branches missed.">        if (from != target &amp;&amp; !from.canTransitionTo(target)) {</span>
+<span class="nc" id="L249">            throw new BusinessException(&quot;Transition interdite : &quot; + from + &quot; → &quot; + target);</span>
+        }
+<span class="pc bpc" id="L251" title="1 of 4 branches missed.">        if (target == TicketStatus.IN_PROGRESS &amp;&amp; t.getAssignee() == null) {</span>
+<span class="nc" id="L252">            throw new BusinessException(&quot;Un ticket doit être affecté avant d'être pris en charge&quot;);</span>
+        }
+<span class="fc" id="L254">        Instant now = Instant.now();</span>
+<span class="pc bpc" id="L255" title="1 of 4 branches missed.">        if (target == TicketStatus.IN_PROGRESS &amp;&amp; t.getFirstResponseAt() == null) {</span>
+<span class="fc" id="L256">            t.setFirstResponseAt(now);</span>
+<span class="fc" id="L257">            t.setSlaResponseBreached(now.isAfter(t.getResponseDueAt()));</span>
+        }
+<span class="fc bfc" id="L259" title="All 2 branches covered.">        if (target == TicketStatus.RESOLVED) {</span>
+<span class="fc" id="L260">            t.setResolvedAt(now);</span>
+<span class="fc" id="L261">            t.setSlaResolutionBreached(now.isAfter(t.getResolutionDueAt()));</span>
+        }
+<span class="pc bpc" id="L263" title="1 of 4 branches missed.">        if (target == TicketStatus.IN_PROGRESS &amp;&amp; from == TicketStatus.RESOLVED) {</span>
+            // réouverture : on annule la résolution précédente
+<span class="nc" id="L265">            t.setResolvedAt(null);</span>
+<span class="nc" id="L266">            t.setResolutionSummary(null);</span>
+        }
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        if (target == TicketStatus.CLOSED) t.setClosedAt(now);</span>
+<span class="pc bpc" id="L269" title="1 of 2 branches missed.">        if (from != target) {</span>
+<span class="fc" id="L270">            history.save(TicketHistory.of(t, by, &quot;status&quot;, from, target));</span>
+<span class="fc" id="L271">            t.setStatus(target);</span>
+        }
+<span class="fc" id="L273">    }</span>
+
+    private TicketComment addComment(Ticket t, User author, String content, boolean internal) {
+<span class="fc" id="L276">        TicketComment c = new TicketComment();</span>
+<span class="fc" id="L277">        c.setTicket(t);</span>
+<span class="fc" id="L278">        c.setAuthor(author);</span>
+<span class="fc" id="L279">        c.setContent(content.trim());</span>
+<span class="fc" id="L280">        c.setInternal(internal);</span>
+<span class="pc bpc" id="L281" title="5 of 6 branches missed.">        if (!internal &amp;&amp; author.getRole() != Role.REQUESTER &amp;&amp; t.getFirstResponseAt() == null) {</span>
+            // Une première réponse publique du support vaut prise en compte au sens du SLA
+<span class="nc" id="L283">            Instant now = Instant.now();</span>
+<span class="nc" id="L284">            t.setFirstResponseAt(now);</span>
+<span class="nc" id="L285">            t.setSlaResponseBreached(now.isAfter(t.getResponseDueAt()));</span>
+        }
+<span class="fc" id="L287">        return comments.save(c);</span>
+    }
+
+    private void assertCanView(Ticket t, User me) {
+<span class="fc bfc" id="L291" title="All 4 branches covered.">        if (me.getRole() == Role.REQUESTER &amp;&amp; !isRequester(t, me)) {</span>
+<span class="fc" id="L292">            throw new AccessDeniedException(&quot;Ce ticket ne vous appartient pas&quot;);</span>
+        }
+<span class="fc" id="L294">    }</span>
+
+    private void assertCanChangeStatus(Ticket t, User me, TicketStatus target) {
+<span class="pc bpc" id="L297" title="2 of 4 branches missed.">        switch (me.getRole()) {</span>
+<span class="nc" id="L298">            case ADMIN, MANAGER -&gt; { /* toutes les transitions autorisées par la machine à états */ }</span>
+            case TECHNICIAN -&gt; {
+<span class="pc bpc" id="L300" title="1 of 4 branches missed.">                if (t.getAssignee() == null || !t.getAssignee().getId().equals(me.getId())) {</span>
+<span class="fc" id="L301">                    throw new AccessDeniedException(&quot;Seul le technicien affecté peut faire évoluer ce ticket&quot;);</span>
+                }
+<span class="pc bpc" id="L303" title="1 of 4 branches missed.">                if (target == TicketStatus.CLOSED || target == TicketStatus.CANCELLED) {</span>
+<span class="fc" id="L304">                    throw new AccessDeniedException(&quot;La clôture et l'annulation relèvent du demandeur ou du responsable&quot;);</span>
+                }
+            }
+            case REQUESTER -&gt; {
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">                if (!isRequester(t, me)) throw new AccessDeniedException(&quot;Ce ticket ne vous appartient pas&quot;);</span>
+<span class="pc bpc" id="L309" title="4 of 6 branches missed.">                boolean allowed = (target == TicketStatus.CLOSED &amp;&amp; t.getStatus() == TicketStatus.RESOLVED)</span>
+<span class="nc bnc" id="L310" title="All 4 branches missed.">                    || (target == TicketStatus.IN_PROGRESS &amp;&amp; t.getStatus() == TicketStatus.RESOLVED) // réouverture</span>
+<span class="pc bnc" id="L311" title="All 2 branches missed.">                    || (target == TicketStatus.CANCELLED &amp;&amp; t.getStatus() == TicketStatus.NEW);</span>
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">                if (!allowed) throw new AccessDeniedException(&quot;Le demandeur peut seulement clôturer, rouvrir ou annuler avant prise en charge&quot;);</span>
+            }
+        }
+<span class="fc" id="L315">    }</span>
+
+    private boolean isRequester(Ticket t, User me) {
+<span class="fc" id="L318">        return t.getRequester().getId().equals(me.getId());</span>
+    }
+
+    private Ticket load(Long id) {
+<span class="pc" id="L322">        return tickets.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Ticket&quot;, id));</span>
+    }
+
+    private Category loadCategory(Long id) {
+<span class="nc" id="L326">        return categories.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Catégorie&quot;, id));</span>
+    }
+
+    private Category defaultCategory() {
+<span class="pc" id="L330">        return categories.findByCode(&quot;OTHER&quot;).orElseThrow(() -&gt; new NotFoundException(&quot;Catégorie&quot;, &quot;OTHER&quot;));</span>
+    }
+
+    private Site loadSite(Long id) {
+<span class="nc" id="L334">        return sites.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Site&quot;, id));</span>
+    }
+
+    private Equipment loadEquipment(Long id) {
+<span class="nc" id="L338">        return equipment.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Équipement&quot;, id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

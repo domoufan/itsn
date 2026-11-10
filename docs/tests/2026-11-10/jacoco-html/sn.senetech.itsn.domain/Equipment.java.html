@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Equipment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.domain</a> &gt; <span class="el_source">Equipment.java</span></div><h1>Equipment.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.domain;
+
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = &quot;equipment&quot;)
+<span class="fc" id="L9">public class Equipment {</span>
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = &quot;asset_tag&quot;, nullable = false, unique = true, length = 40) private String assetTag;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private EquipmentType type;
+    private String brand;
+    private String model;
+    @Column(name = &quot;serial_number&quot;) private String serialNumber;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = &quot;site_id&quot;) private Site site;
+<span class="fc" id="L18">    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private EquipmentStatus status = EquipmentStatus.IN_SERVICE;</span>
+    @Column(name = &quot;purchase_date&quot;) private LocalDate purchaseDate;
+    @Column(name = &quot;warranty_end&quot;) private LocalDate warrantyEnd;
+    private String notes;
+<span class="fc" id="L22">    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false) private Instant createdAt = Instant.now();</span>
+
+<span class="nc" id="L24">    public Long getId() { return id; }</span>
+<span class="nc" id="L25">    public String getAssetTag() { return assetTag; }</span>
+<span class="nc" id="L26">    public void setAssetTag(String assetTag) { this.assetTag = assetTag; }</span>
+<span class="nc" id="L27">    public EquipmentType getType() { return type; }</span>
+<span class="nc" id="L28">    public void setType(EquipmentType type) { this.type = type; }</span>
+<span class="nc" id="L29">    public String getBrand() { return brand; }</span>
+<span class="nc" id="L30">    public void setBrand(String brand) { this.brand = brand; }</span>
+<span class="nc" id="L31">    public String getModel() { return model; }</span>
+<span class="nc" id="L32">    public void setModel(String model) { this.model = model; }</span>
+<span class="nc" id="L33">    public String getSerialNumber() { return serialNumber; }</span>
+<span class="nc" id="L34">    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }</span>
+<span class="nc" id="L35">    public Site getSite() { return site; }</span>
+<span class="nc" id="L36">    public void setSite(Site site) { this.site = site; }</span>
+<span class="nc" id="L37">    public EquipmentStatus getStatus() { return status; }</span>
+<span class="nc" id="L38">    public void setStatus(EquipmentStatus status) { this.status = status; }</span>
+<span class="nc" id="L39">    public LocalDate getPurchaseDate() { return purchaseDate; }</span>
+<span class="nc" id="L40">    public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }</span>
+<span class="nc" id="L41">    public LocalDate getWarrantyEnd() { return warrantyEnd; }</span>
+<span class="nc" id="L42">    public void setWarrantyEnd(LocalDate warrantyEnd) { this.warrantyEnd = warrantyEnd; }</span>
+<span class="nc" id="L43">    public String getNotes() { return notes; }</span>
+<span class="nc" id="L44">    public void setNotes(String notes) { this.notes = notes; }</span>
+<span class="nc" id="L45">    public Instant getCreatedAt() { return createdAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

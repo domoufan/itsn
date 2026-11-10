@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: sn.senetech.itsn.ai.HeuristicTriageAgentTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.623 s -- in sn.senetech.itsn.ai.HeuristicTriageAgentTest

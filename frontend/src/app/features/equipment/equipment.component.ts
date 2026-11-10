@@ -17,7 +17,7 @@ import { Equipment, Site } from '../../core/models';
   imports: [FormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
   template: `
     <div class="page">
-      <div class="page-header"><h1>Équipements</h1>
+      <div class="page-header"><div><h1>Équipements</h1><p class="subtitle">Inventaire des équipements rattachés aux sites clients</p></div>
         <div class="toolbar-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Site</mat-label>
             <mat-select [(ngModel)]="siteId" (selectionChange)="load()"><mat-option [value]="null">Tous</mat-option>@for (s of sites(); track s.id) { <mat-option [value]="s.id">{{ s.name }}</mat-option> }</mat-select></mat-form-field>
@@ -25,7 +25,7 @@ import { Equipment, Site } from '../../core/models';
         </div>
       </div>
       @if (draft(); as d) {
-        <mat-card style="margin-bottom:16px"><mat-card-content>
+        <mat-card class="lift" style="margin-bottom:16px"><mat-card-content>
           <div class="form-grid">
             <mat-form-field appearance="outline"><mat-label>N° inventaire</mat-label><input matInput [(ngModel)]="d.assetTag" /></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Type</mat-label><mat-select [(ngModel)]="d.type">@for (t of types; track t) { <mat-option [value]="t">{{ t }}</mat-option> }</mat-select></mat-form-field>

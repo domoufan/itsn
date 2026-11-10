@@ -15,8 +15,8 @@ Tableau : Bilan des objectifs spécifiques
 |---|---|---|
 | OS1 – Formaliser les besoins | 32 exigences identifiées, priorisées, dotées de critères d'acceptation et reliées à des tests | Besoins issus d'une analyse documentaire et de scénarios, non d'un terrain réel |
 | OS2 – Concevoir une solution cohérente | Modélisation UML (contexte, cas d'utilisation, classes, états, séquences), architecture et choix justifiés, correspondance exigences → composants | — |
-| OS3 – Réaliser un prototype opérationnel | Application complète (backend, frontend, données fictives), dépôt organisé, démarrage en une commande | [À confirmer après exécution des tests d'intégration : 100 % des exigences P1 réalisées] |
-| OS4 – Garantir qualité et sécurité | Plan de tests de 45 cas couvrant les 32 exigences ; mesures OWASP appliquées | Tests backend, manuels, de sécurité et de performance [à exécuter / exécutés — à mettre à jour] |
+| OS3 – Réaliser un prototype opérationnel | Application complète (backend, frontend, données fictives), dépôt organisé, démarrage en une commande | 100 % des exigences P1 réalisées et testées localement (40 tests automatisés réussis le 10/11/2026) |
+| OS4 – Garantir qualité et sécurité | Plan de tests de 45 cas couvrant les 32 exigences ; mesures OWASP appliquées | Tests automatisés, de sécurité (4/6) et de performance exécutés ; tests manuels d'interface et tests liés au déploiement restant à exécuter |
 | OS5 – Industrialiser la livraison | Chaîne CI/CD écrite et versionnée, promotion du même artefact, retour arrière décrit | Exécution du pipeline et déploiement cloud [à réaliser / réalisés — à mettre à jour] |
 | OS6 – Intégrer l'IA de façon maîtrisée | Agent borné, repli, revue humaine, jeu d'évaluation de 30 cas et script de mesure | Évaluation avec le modèle réel [à réaliser / réalisée — résultats à reporter] |
 

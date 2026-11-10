@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.catalog</a> &gt; <span class="el_source">CategoryController.java</span></div><h1>CategoryController.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.catalog;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import sn.senetech.itsn.common.BusinessException;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.Category;
+import sn.senetech.itsn.repository.CategoryRepository;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/categories&quot;)
+public class CategoryController {
+
+<span class="nc" id="L21">    public record CategoryRequest(@NotBlank @Pattern(regexp = &quot;[A-Z_]{2,30}&quot;) String code, @NotBlank @Size(max = 80) String name, String description, Boolean active) {}</span>
+<span class="nc" id="L22">    public record CategoryResponse(Long id, String code, String name, String description, boolean active) {</span>
+<span class="nc" id="L23">        static CategoryResponse from(Category c) { return new CategoryResponse(c.getId(), c.getCode(), c.getName(), c.getDescription(), c.isActive()); }</span>
+    }
+
+    private final CategoryRepository categories;
+
+<span class="fc" id="L28">    public CategoryController(CategoryRepository categories) { this.categories = categories; }</span>
+
+    @GetMapping
+    public List&lt;CategoryResponse&gt; list(@RequestParam(defaultValue = &quot;true&quot;) boolean activeOnly) {
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        List&lt;Category&gt; l = activeOnly ? categories.findByActiveTrueOrderByName() : categories.findAll();</span>
+<span class="nc" id="L33">        return l.stream().map(CategoryResponse::from).toList();</span>
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public CategoryResponse create(@Valid @RequestBody CategoryRequest req) {
+<span class="nc" id="L40">        categories.findByCode(req.code()).ifPresent(c -&gt; { throw new BusinessException(&quot;Code de catégorie déjà utilisé&quot;); });</span>
+<span class="nc" id="L41">        Category c = new Category();</span>
+<span class="nc" id="L42">        c.setCode(req.code()); c.setName(req.name()); c.setDescription(req.description());</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (req.active() != null) c.setActive(req.active());</span>
+<span class="nc" id="L44">        return CategoryResponse.from(categories.save(c));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public CategoryResponse update(@PathVariable Long id, @Valid @RequestBody CategoryRequest req) {
+<span class="nc" id="L50">        Category c = categories.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Catégorie&quot;, id));</span>
+<span class="nc" id="L51">        c.setName(req.name()); c.setDescription(req.description());</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (req.active() != null) c.setActive(req.active());</span>
+<span class="nc" id="L53">        return CategoryResponse.from(categories.save(c));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

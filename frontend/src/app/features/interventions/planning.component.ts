@@ -20,7 +20,7 @@ import { Intervention, TicketSummary, UserAdmin } from '../../core/models';
   imports: [DatePipe, FormsModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
   template: `
     <div class="page">
-      <div class="page-header"><h1>Planning des interventions</h1>
+      <div class="page-header"><div><h1>Planning des interventions</h1><p class="subtitle">Interventions planifiées sur la semaine, par technicien</p></div>
         <div class="toolbar-row">
           <button mat-stroked-button (click)="shift(-7)"><mat-icon>chevron_left</mat-icon></button>
           <strong>{{ from | date:'dd/MM' }} → {{ to | date:'dd/MM/yyyy' }}</strong>
@@ -32,7 +32,7 @@ import { Intervention, TicketSummary, UserAdmin } from '../../core/models';
       </div>
 
       @if (showForm()) {
-        <mat-card style="margin-bottom:16px"><mat-card-content>
+        <mat-card class="lift" style="margin-bottom:16px"><mat-card-content>
           <div class="form-grid">
             <mat-form-field appearance="outline"><mat-label>Ticket ouvert</mat-label>
               <mat-select [(ngModel)]="draft.ticketId">@for (t of openTickets(); track t.id) { <mat-option [value]="t.id">{{ t.reference }} – {{ t.title }}</mat-option> }</mat-select></mat-form-field>

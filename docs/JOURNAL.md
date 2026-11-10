@@ -1,4 +1,4 @@
-# Journal de projet — IntervIT
+# Journal de projet — ITSN
 
 | Itération | Dates | Objectifs | Réalisé | Écarts / décisions | Validation encadreur |
 |---|---|---|---|---|---|

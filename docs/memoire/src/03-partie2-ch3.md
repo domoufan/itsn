@@ -10,7 +10,7 @@ Il convient de distinguer deux choses souvent confondues : la **méthode de coll
 
 ## Comparaison des démarches et justification du choix
 
-Le projet présente trois caractéristiques déterminantes : un délai court et non négociable (dépôt pour prélecture le 27 novembre 2026, dépôt final le 11 décembre, soutenance entre le 16 et le 28 décembre), une équipe réduite [d'une personne / de N personnes] et un périmètre connu dès le départ mais dont certains éléments (agent IA, déploiement cloud) comportent une incertitude technique. Quatre démarches ont été comparées.
+Le projet présente trois caractéristiques déterminantes : un délai court et non négociable (dépôt pour prélecture le 27 novembre 2026, dépôt final le 11 décembre, soutenance entre le 16 et le 28 décembre), une équipe réduite à une personne et un périmètre connu dès le départ mais dont certains éléments (agent IA, déploiement cloud) comportent une incertitude technique. Quatre démarches ont été comparées.
 
 Tableau : Comparaison des démarches de gestion de projet
 
@@ -29,12 +29,11 @@ Tableau : Rôles dans le projet
 
 | Rôle | Titulaire | Responsabilités |
 |---|---|---|
-| Propriétaire du produit (Product Owner) | [Étudiant] avec validation de l'encadreur | Priorisation du backlog, arbitrage du périmètre, acceptation des incréments |
-| Équipe de réalisation | [Étudiant(s)] | Conception, développement, tests, intégration, documentation |
-| Encadreur | [Nom] | Validation du cadrage, des choix techniques et des livrables ; relecture |
+| Propriétaire du produit (Product Owner) | Mouhamed Diop, avec validation de l'encadreur | Priorisation du backlog, arbitrage du périmètre, acceptation des incréments |
+| Équipe de réalisation | Mouhamed Diop | Conception, développement, tests, intégration, documentation |
+| Encadreur | M. Wane | Validation du cadrage, des choix techniques et des livrables ; relecture |
 | Assistant IA (Claude, Anthropic) | Outil | Exploration de pistes, génération de code et de tests soumis à relecture, amélioration de la langue ; usages consignés en annexe |
 
-[Pour un travail en groupe, ajouter ici la répartition nominative : backend, frontend, CI/CD et cloud, agent IA, rédaction, en veillant à ce que chaque membre puisse expliquer l'ensemble.]
 
 ## Outils de suivi et gestion des versions
 
@@ -55,7 +54,7 @@ Tableau : Planning prévu et réalisé par itération
 | Itération | Période | Objectif prévu | Réalisé | Écart et explication |
 |---|---|---|---|---|
 | 0 – Cadrage | 8 – 10 nov. | Analyse du canevas, étude de cas, référentiel d'exigences, choix techniques, squelette du dépôt | Réalisé le 8 nov. : étude de cas, 32 exigences, architecture, squelette backend/frontend/CI | Avance : le cadrage et le socle technique ont été produits en une journée grâce à l'assistance IA ; validation de l'encadreur à obtenir |
-| 1 – Cœur métier | 10 – 16 nov. | Tickets, SLA, affectation, machine à états, interventions, inventaire, sécurité, interface Angular | [À renseigner à la fin de l'itération] | [À renseigner] |
+| 1 – Cœur métier | 10 – 16 nov. | Tickets, SLA, affectation, machine à états, interventions, inventaire, sécurité, interface Angular | 10 nov. : backend compilé, 40 tests réussis, 2 anomalies corrigées ; charte graphique et refonte de l'interface ; tests de sécurité et de performance exécutés | En avance : le cœur métier était fonctionnel dès le 10 nov. ; l'effort s'est reporté sur l'interface et la qualité |
 | 2 – Agent IA et qualité | 13 – 20 nov. | Agent de triage, garde-fous, repli, tests unitaires et d'intégration, évaluation sur 30 cas | [À renseigner] | [À renseigner] |
 | 3 – Livraison | 17 – 24 nov. | CI/CD, images Docker, déploiement Render/Neon, smoke tests, procédure de retour arrière | [À renseigner] | [À renseigner] |
 | 4 – Mémoire v1 | 9 – 27 nov. | Rédaction complète, figures, annexes ; dépôt pour prélecture | [À renseigner] | [À renseigner] |

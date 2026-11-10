@@ -31,7 +31,7 @@ Les contraintes retenues pour l'étude de cas sont celles d'une PME : budget d'e
 
 ### Responsabilités au sein du projet
 
-[Le projet a été réalisé individuellement. / Le projet a été réalisé en groupe de N étudiants ; la répartition des responsabilités est la suivante : …] L'encadreur a validé le cadrage, le périmètre et les principaux choix techniques lors de points réguliers consignés au chapitre 3. L'assistance d'outils d'intelligence artificielle générative, utilisée pour l'exploration de pistes, la génération de code et de tests soumis à relecture, l'amélioration de la langue et la traduction du résumé, est détaillée dans la déclaration et le journal placés en annexe.
+Le projet a été réalisé individuellement par Mouhamed Diop, étudiant en Licence professionnelle Génie logiciel à l'École 221. L'encadreur a validé le cadrage, le périmètre et les principaux choix techniques lors de points réguliers consignés au chapitre 3. L'assistance d'outils d'intelligence artificielle générative, utilisée pour l'exploration de pistes, la génération de code et de tests soumis à relecture, l'amélioration de la langue et la traduction du résumé, est détaillée dans la déclaration et le journal placés en annexe.
 
 ## Section 2 — Contexte d'étude
 

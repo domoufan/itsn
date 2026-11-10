@@ -22,9 +22,9 @@ import { AiStatus, Suggestion } from '../../core/models';
   imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatChipsModule],
   template: `
     <div class="page">
-      <div class="page-header"><h1>Propositions de l'agent IA</h1></div>
+      <div class="page-header"><div><h1>Propositions de l'agent IA</h1><p class="subtitle">Propositions de l'agent de triage en attente de votre décision</p></div></div>
       @if (status(); as s) {
-        <mat-card style="margin-bottom:16px"><mat-card-content class="toolbar-row">
+        <mat-card class="lift" style="margin-bottom:16px"><mat-card-content class="toolbar-row">
           <mat-chip-set>
             <mat-chip [highlighted]="s.enabled" [color]="s.enabled ? 'primary' : undefined">{{ s.enabled ? 'API IA active (' + s.model + ')' : 'IA désactivée — simulation locale' }}</mat-chip>
             <mat-chip>Budget du jour : {{ s.spentTodayUsd | number:'1.4-4' }} / {{ s.dailyBudgetUsd | number:'1.2-2' }} USD</mat-chip>
@@ -36,7 +36,7 @@ import { AiStatus, Suggestion } from '../../core/models';
         </mat-card-content></mat-card>
       }
       @for (s of items(); track s.id) {
-        <mat-card style="margin-bottom:16px">
+        <mat-card class="lift" style="margin-bottom:16px">
           <mat-card-header>
             <mat-card-title><a [routerLink]="['/tickets', s.ticketId]" class="mono">{{ s.ticketReference }}</a> — {{ s.ticketTitle }}</mat-card-title>
             <mat-card-subtitle>{{ s.createdAt | date:'dd/MM HH:mm' }} · {{ s.model }} · {{ s.toolCalls }} outil(s) · {{ s.latencyMs }} ms · {{ s.inputTokens + s.outputTokens }} jetons · {{ s.estimatedCostUsd | number:'1.4-4' }} USD</mat-card-subtitle>

@@ -1,0 +1,2 @@
+# TP-01 performance : 50 x GET /api/tickets?openOnly=true&size=20 (local, 2 vCPU, 7 Go RAM)
+n=50 min=10 ms p50=17 ms p95=31 ms max=45 ms

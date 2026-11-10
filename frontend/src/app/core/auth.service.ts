@@ -5,8 +5,8 @@ import { tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginResponse, Role, UserProfile } from './models';
 
-const TOKEN_KEY = 'intervit.token';
-const USER_KEY = 'intervit.user';
+const TOKEN_KEY = 'itsn.token';
+const USER_KEY = 'itsn.user';
 
 /** Session utilisateur : jeton JWT conservé en localStorage, profil exposé sous forme de signal. */
 @Injectable({ providedIn: 'root' })

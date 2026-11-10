@@ -1,5 +1,5 @@
 -- =====================================================================
--- IntervIT - Schéma initial (PostgreSQL 16)
+-- ITSN - Schéma initial (PostgreSQL 16)
 -- Plateforme de gestion des interventions techniques (ITSM)
 -- =====================================================================
 

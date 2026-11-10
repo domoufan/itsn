@@ -1,10 +1,10 @@
 spring:
   application:
-    name: intervit-backend
+    name: itsn-backend
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/intervit}
-    username: ${DATABASE_USER:intervit}
-    password: ${DATABASE_PASSWORD:intervit}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/itsn}
+    username: ${DATABASE_USER:itsn}
+    password: ${DATABASE_PASSWORD:itsn}
   jpa:
     hibernate:
       ddl-auto: validate          # le schéma est géré exclusivement par Flyway
@@ -30,6 +30,9 @@ server:
     include-stacktrace: never
 
 management:
+  health:
+    mail:
+      enabled: false   # un SMTP injoignable ne doit pas rendre l'application indisponible
   endpoints:
     web:
       exposure:
@@ -45,11 +48,11 @@ management:
 
 info:
   app:
-    name: IntervIT
+    name: ITSN
     version: ${APP_VERSION:dev}
     commit: ${GIT_COMMIT:local}
 
-intervit:
+itsn:
   security:
     # Secret HMAC-SHA256 pour signer les JWT : >= 32 caractères, à surcharger en production
     jwt-secret: ${JWT_SECRET:changeme-changeme-changeme-changeme-0123456789}
@@ -77,4 +80,4 @@ intervit:
 logging:
   level:
     root: INFO
-    sn.senetech.intervit: INFO
+    sn.senetech.itsn: INFO

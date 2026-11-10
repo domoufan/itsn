@@ -26,7 +26,7 @@ Le **PaaS Render** a été retenu pour l'API (deux services web déployés depui
 
 ### Environnements, isolation et configuration
 
-Trois environnements sont définis (chapitre 4) : développement local (docker compose), préproduction et production. La préproduction et la production sont deux services Render distincts, chacun avec ses propres variables d'environnement et sa propre branche Neon : l'isolation est donc assurée au niveau des identifiants et des données. **Le même artefact** (image `ghcr.io/<compte>/intervit-backend:<sha7>`) est déployé dans les deux environnements ; seule la configuration change, conformément au principe « une construction, plusieurs déploiements ».
+Trois environnements sont définis (chapitre 4) : développement local (docker compose), préproduction et production. La préproduction et la production sont deux services Render distincts, chacun avec ses propres variables d'environnement et sa propre branche Neon : l'isolation est donc assurée au niveau des identifiants et des données. **Le même artefact** (image `ghcr.io/<compte>/itsn-backend:<sha7>`) est déployé dans les deux environnements ; seule la configuration change, conformément au principe « une construction, plusieurs déploiements ».
 
 Tableau : Réseau, domaine, HTTPS et accès
 
@@ -82,7 +82,7 @@ Tableau : Éléments du pipeline
 |---|---|
 | Fichiers de pipeline | `.github/workflows/ci.yml`, `.github/workflows/cd.yml` (versionnés, reproduits en annexe expurgés de tout secret) |
 | Agents d'exécution | Exécuteurs hébergés GitHub `ubuntu-latest` |
-| Registre d'artefacts | GitHub Container Registry : `ghcr.io/<compte>/intervit-backend` et `…-frontend`, étiquettes `sha7` et `latest` ; rapports de tests conservés 30 jours comme artefacts de workflow |
+| Registre d'artefacts | GitHub Container Registry : `ghcr.io/<compte>/itsn-backend` et `…-frontend`, étiquettes `sha7` et `latest` ; rapports de tests conservés 30 jours comme artefacts de workflow |
 | Variables de configuration | `STAGING_URL`, `PRODUCTION_URL` (variables d'environnement GitHub) ; variables Render par service |
 | Secrets | `RENDER_DEPLOY_HOOK_STAGING`, `RENDER_DEPLOY_HOOK_PRODUCTION` (GitHub Secrets) ; `DATABASE_*`, `JWT_SECRET`, `ANTHROPIC_API_KEY` (Render) ; jamais dans le dépôt ni dans les journaux (les étapes n'affichent que le nom de l'image) |
 | Permissions | Jeton `GITHUB_TOKEN` limité à `contents: read`, `packages: write` ; CD limité à `contents: read` |
@@ -118,7 +118,7 @@ Tableau : Livrables de déploiement et état
 
 ### Rôle dans le projet et distinction avec la CI/CD
 
-Le pipeline agentique d'IntervIT est un enchaînement de tâches dans lequel **un agent d'IA unique** utilise des outils pour atteindre un objectif défini : **qualifier un ticket** (catégorie, impact, urgence, technicien pressenti, articles de connaissance liés, résumé). Son rôle est l'**assistance à la décision** du responsable support ; il ne remplace ni la décision ni l'action humaine. Il se distingue du pipeline CI/CD, qui construit, teste et livre les versions du logiciel : l'un agit sur les **données métier** à l'exécution, l'autre sur le **code** lors de la livraison. Les deux partagent toutefois une exigence : une validation humaine avant tout effet irréversible.
+Le pipeline agentique d'ITSN est un enchaînement de tâches dans lequel **un agent d'IA unique** utilise des outils pour atteindre un objectif défini : **qualifier un ticket** (catégorie, impact, urgence, technicien pressenti, articles de connaissance liés, résumé). Son rôle est l'**assistance à la décision** du responsable support ; il ne remplace ni la décision ni l'action humaine. Il se distingue du pipeline CI/CD, qui construit, teste et livre les versions du logiciel : l'un agit sur les **données métier** à l'exécution, l'autre sur le **code** lors de la livraison. Les deux partagent toutefois une exigence : une validation humaine avant tout effet irréversible.
 
 ### Objectif, entrées, sorties et critères de réussite
 
@@ -145,7 +145,7 @@ Les **conditions de passage** entre étapes sont : garde-fous satisfaits → ex�
 
 ### Mise en œuvre et articulation avec la CI/CD
 
-Les instructions système, le format de sortie, la déclaration des outils, les paramètres (modèle, limites, tarifs) et le code d'orchestration sont **versionnés dans le dépôt** (`backend/src/main/java/sn/senetech/intervit/ai/`, `application.yml`) et documentés dans `tools/agent/README.md`. Les dépendances se limitent au client HTTP de Spring ; aucune bibliothèque d'orchestration tierce n'est utilisée, ce qui rend la boucle entièrement lisible et testable. L'agent **ne propose aucune modification de code** : il agit sur des données métier, et ses propositions passent par la revue humaine décrite plus haut. Les tests de la CI couvrent l'extraction et la validation de la sortie (TU-04), le repli (TU-05) et le flux complet en mode repli (TI-20 à TI-24) ; l'appel réel au modèle n'est pas exécuté en CI (coût, non-déterminisme), mais par le script d'évaluation.
+Les instructions système, le format de sortie, la déclaration des outils, les paramètres (modèle, limites, tarifs) et le code d'orchestration sont **versionnés dans le dépôt** (`backend/src/main/java/sn/senetech/itsn/ai/`, `application.yml`) et documentés dans `tools/agent/README.md`. Les dépendances se limitent au client HTTP de Spring ; aucune bibliothèque d'orchestration tierce n'est utilisée, ce qui rend la boucle entièrement lisible et testable. L'agent **ne propose aucune modification de code** : il agit sur des données métier, et ses propositions passent par la revue humaine décrite plus haut. Les tests de la CI couvrent l'extraction et la validation de la sortie (TU-04), le repli (TU-05) et le flux complet en mode repli (TI-20 à TI-24) ; l'appel réel au modèle n'est pas exécuté en CI (coût, non-déterminisme), mais par le script d'évaluation.
 
 **Permissions et isolement.** Les outils n'ont que des droits de lecture et ne renvoient que des champs nécessaires ; les paramètres fournis par le modèle sont nettoyés (caractères de contrôle, jokers SQL, longueur). Aucune action d'écriture, de suppression ou de mise en production n'est accessible à l'agent. **Validation humaine** : obligatoire avant toute application (EF-13). **Limites** : durée (30 s), nombre d'actions (6 outils, 7 appels au modèle au plus), coût (budget journalier). **Interruption** : désactivation par variable d'environnement (`AI_ENABLED=false`) sans redéploiement de code. **Repli manuel** : simulation heuristique locale, puis qualification manuelle.
 

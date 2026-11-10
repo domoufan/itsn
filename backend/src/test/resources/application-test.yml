@@ -1,11 +1,11 @@
 spring:
   datasource:
-    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/intervit_test}
-    username: ${TEST_DATABASE_USER:intervit}
-    password: ${TEST_DATABASE_PASSWORD:intervit}
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/itsn_test}
+    username: ${TEST_DATABASE_USER:itsn}
+    password: ${TEST_DATABASE_PASSWORD:itsn}
   flyway:
     clean-disabled: false
-intervit:
+itsn:
   security:
     jwt-secret: test-secret-test-secret-test-secret-test-secret-0123456789
     jwt-expiration-minutes: 60
@@ -19,4 +19,4 @@ intervit:
     seed-enabled: false
 logging:
   level:
-    sn.senetech.intervit: INFO
+    sn.senetech.itsn: INFO

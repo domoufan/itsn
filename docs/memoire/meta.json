@@ -1,14 +1,14 @@
 {
-  "universite": "[UNIVERSITÉ]",
-  "ecole": "[ÉCOLE]",
-  "departement": "[Département / Spécialisation]",
+  "universite": "École 221",
+  "ecole": "École 221 — Dakar",
+  "departement": "Licence professionnelle — Génie logiciel",
   "logo": "logo.png",
-  "parcours": "[PARCOURS : Génie logiciel / Réseaux et systèmes / Conception et développement de solutions digitales]",
+  "parcours": "Génie logiciel",
   "code": "E221",
   "titre": "Plateforme de gestion des interventions techniques (ITSM)",
-  "sousTitre": "Conception, réalisation et déploiement d'IntervIT, avec un agent d'intelligence artificielle de triage sous validation humaine — étude de cas SénéTech Services",
-  "titreCourt": "Mémoire IntervIT",
-  "etudiants": ["[PRÉNOM NOM]"],
-  "encadreur": "[PRÉNOM NOM DE L'ENCADREUR]",
-  "annee": "[2025-2026]"
+  "sousTitre": "Conception, réalisation et déploiement d'ITSN, avec un agent d'intelligence artificielle de triage sous validation humaine — étude de cas SénéTech Services",
+  "titreCourt": "Mémoire ITSN",
+  "etudiants": ["Mouhamed DIOP"],
+  "encadreur": "M. WANE",
+  "annee": "2025-2026"
 }

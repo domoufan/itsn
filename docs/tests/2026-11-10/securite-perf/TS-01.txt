@@ -1,0 +1,4 @@
+# TS-01 jeton altéré / absent (2026-11-10T05:50:05Z)
+sans jeton: 401
+jeton altéré: 401
+jeton expiré (exp=2020): 401

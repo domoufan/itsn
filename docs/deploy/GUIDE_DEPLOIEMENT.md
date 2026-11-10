@@ -1,4 +1,4 @@
-# Guide de déploiement reproductible — IntervIT
+# Guide de déploiement reproductible — ITSN
 
 Ce guide décrit la mise en service depuis le dépôt jusqu'à l'exploitation, en distinguant
 **ce qui est automatisé** (CI/CD) de **ce qui est réalisé une fois à la main** (création des comptes cloud).
@@ -10,7 +10,7 @@ Ce guide décrit la mise en service depuis le dépôt jusqu'à l'exploitation, e
 | API Spring Boot (image Docker) | Render Web Service (`runtime: image`) × 2 : préproduction et production | gratuite | exécution de l'API, santé `/actuator/health` |
 | Interface Angular | Render Static Site | gratuite | fichiers statiques + réécriture `/api/*` vers l'API |
 | Base de données | Neon PostgreSQL 16 (branche `main` = production, branche `staging`) | gratuite | données, sauvegardes automatiques (point-in-time 24 h) |
-| Registre d'images | GitHub Container Registry (ghcr.io) | gratuit | artefacts versionnés `intervit-backend:<sha7>` |
+| Registre d'images | GitHub Container Registry (ghcr.io) | gratuit | artefacts versionnés `itsn-backend:<sha7>` |
 | CI/CD | GitHub Actions | gratuit (2 000 min/mois) | construction, tests, analyse, publication, promotion |
 | Secrets | GitHub Secrets + variables d'environnement Render | — | jamais dans le dépôt |
 
@@ -22,9 +22,9 @@ Région : Francfort (la plus proche de Dakar parmi les régions gratuites de Ren
 2. **Environnements GitHub** (*Settings → Environments*) : créer `staging` et `production`.
    Sur `production`, cocher **Required reviewers** et ajouter l'encadreur ou soi-même : c'est la validation humaine avant mise en production.
    Variables : `STAGING_URL` et `PRODUCTION_URL` (URL publiques des services Render).
-3. **Neon** : créer un projet `intervit`, une base `intervit`, puis une branche `staging`. Récupérer les chaînes de connexion.
+3. **Neon** : créer un projet `itsn`, une base `itsn`, puis une branche `staging`. Récupérer les chaînes de connexion.
 4. **Render** : *New → Blueprint* à partir de `infra/render/render.yaml` (remplacer `VOTRE_COMPTE`). Renseigner les variables `sync: false`
-   (`DATABASE_URL` au format `jdbc:postgresql://HOTE/intervit?sslmode=require`, `DATABASE_USER`, `DATABASE_PASSWORD`, `ANTHROPIC_API_KEY`).
+   (`DATABASE_URL` au format `jdbc:postgresql://HOTE/itsn?sslmode=require`, `DATABASE_USER`, `DATABASE_PASSWORD`, `ANTHROPIC_API_KEY`).
    Autoriser Render à lire GHCR (*Account → Registry credentials*, jeton GitHub avec `read:packages`).
 5. Copier les **Deploy Hooks** des deux services dans les secrets GitHub `RENDER_DEPLOY_HOOK_STAGING` et `RENDER_DEPLOY_HOOK_PRODUCTION`.
 

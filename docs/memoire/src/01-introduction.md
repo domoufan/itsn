@@ -21,7 +21,7 @@ La question centrale de ce mémoire est la suivante :
 
 > **Comment concevoir et mettre en œuvre une plateforme de gestion des interventions techniques, alignée sur les bonnes pratiques ITSM et adaptée aux moyens d'une PME, qui garantisse la traçabilité de chaque demande, le respect mesurable des engagements de service et l'aide à la décision, tout en intégrant l'intelligence artificielle de manière contrôlée et économiquement soutenable ?**
 
-L'**objectif général** est de concevoir, réaliser, tester et déployer une application web complète — baptisée IntervIT — couvrant le cycle de vie des tickets d'incident et de demande, la planification des interventions, l'inventaire des équipements, la base de connaissances et le pilotage par indicateurs, complétée par un agent d'intelligence artificielle de triage soumis à validation humaine.
+L'**objectif général** est de concevoir, réaliser, tester et déployer une application web complète — baptisée ITSN — couvrant le cycle de vie des tickets d'incident et de demande, la planification des interventions, l'inventaire des équipements, la base de connaissances et le pilotage par indicateurs, complétée par un agent d'intelligence artificielle de triage soumis à validation humaine.
 
 Les **objectifs spécifiques**, formulés de manière évaluable, sont les suivants :
 

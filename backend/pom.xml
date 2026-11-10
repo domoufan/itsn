@@ -12,9 +12,9 @@
   </parent>
 
   <groupId>sn.senetech</groupId>
-  <artifactId>intervit-backend</artifactId>
+  <artifactId>itsn-backend</artifactId>
   <version>1.0.0</version>
-  <name>IntervIT - Backend</name>
+  <name>ITSN - Backend</name>
   <description>Plateforme de gestion des interventions techniques (ITSM) - API REST</description>
 
   <properties>
