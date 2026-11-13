@@ -7,7 +7,7 @@ services:
     name: itsn-api-staging
     runtime: image
     image:
-      url: ghcr.io/VOTRE_COMPTE/itsn-backend:latest   # remplacé à chaque livraison par le deploy hook (imgURL=…)
+      url: ghcr.io/domoufan/itsn-backend:latest   # remplacé à chaque livraison par le deploy hook (imgURL=…)
     plan: free
     region: frankfurt
     healthCheckPath: /actuator/health/readiness
@@ -37,7 +37,7 @@ services:
     name: itsn-api
     runtime: image
     image:
-      url: ghcr.io/VOTRE_COMPTE/itsn-backend:latest
+      url: ghcr.io/domoufan/itsn-backend:latest
     plan: free
     region: frankfurt
     healthCheckPath: /actuator/health/readiness
