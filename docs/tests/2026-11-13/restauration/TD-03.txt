@@ -1,0 +1,37 @@
+# TD-03 sauvegarde / restauration — 2026-11-13T17:59:26Z — base locale 'itsn' (PostgreSQL 16, même procédure que pour Neon)
+## 1. Sauvegarde
+
+real	0m0.151s
+user	0m0.057s
+sys	0m0.000s
+taille : 62729 octets
+## 2. Empreinte avant : ticket INC-2026-00004 et ses dépendances
+ INC-2026-00004 | Serveur de fichiers inaccessible | CLOSED |            2 |          2
+
+## 3. Suppression accidentelle simulée
+DELETE 1
+       0
+
+## 4. Restauration dans une base de contrôle puis bascule
+NOTICE:  database "itsn_restore" does not exist, skipping
+
+real	0m0.191s
+user	0m0.043s
+sys	0m0.011s
+## 5. Vérification après restauration
+ INC-2026-00004 | Serveur de fichiers inaccessible | CLOSED |            2 |          2
+
+ tickets       |    55
+ users         |    14
+ interventions |    10
+
+## 6. Réinjection ciblée du ticket dans la base courante (depuis la base restaurée)
+tickets : COPY 1
+ticket_comments : COPY 2
+ticket_history : COPY 2
+interventions : COPY 0
+ai_suggestions : COPY 0
+## 7. Vérification finale dans la base courante
+ INC-2026-00004 | Serveur de fichiers inaccessible | CLOSED |            2 |          2
+
+Résultat : ticket restauré à l'identique (même référence, état, 2 commentaires, 2 entrées d'historique) ; durée totale < 1 min.

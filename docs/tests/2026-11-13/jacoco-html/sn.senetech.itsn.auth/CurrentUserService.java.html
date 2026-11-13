@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CurrentUserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.auth</a> &gt; <span class="el_source">CurrentUserService.java</span></div><h1>CurrentUserService.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.auth;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.Role;
+import sn.senetech.itsn.domain.User;
+import sn.senetech.itsn.repository.UserRepository;
+
+/** Résout l'utilisateur courant à partir du JWT porté par la requête. */
+@Service
+public class CurrentUserService {
+
+    private final UserRepository userRepository;
+
+<span class="fc" id="L18">    public CurrentUserService(UserRepository userRepository) {</span>
+<span class="fc" id="L19">        this.userRepository = userRepository;</span>
+<span class="fc" id="L20">    }</span>
+
+    public Long currentUserId() {
+<span class="fc" id="L23">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="pc bpc" id="L24" title="2 of 4 branches missed.">        if (auth != null &amp;&amp; auth.getPrincipal() instanceof Jwt jwt) {</span>
+<span class="fc" id="L25">            return Long.valueOf(jwt.getSubject());</span>
+        }
+<span class="nc" id="L27">        throw new IllegalStateException(&quot;Aucun utilisateur authentifié&quot;);</span>
+    }
+
+    public User currentUser() {
+<span class="fc" id="L31">        Long id = currentUserId();</span>
+<span class="pc" id="L32">        return userRepository.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Utilisateur&quot;, id));</span>
+    }
+
+    public boolean hasRole(Role role) {
+<span class="fc" id="L36">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="pc bpc" id="L37" title="1 of 4 branches missed.">        return auth != null &amp;&amp; auth.getAuthorities().stream().anyMatch(a -&gt; a.getAuthority().equals(&quot;ROLE_&quot; + role.name()));</span>
+    }
+
+    public boolean isStaff() {
+<span class="pc bpc" id="L41" title="4 of 6 branches missed.">        return hasRole(Role.ADMIN) || hasRole(Role.MANAGER) || hasRole(Role.TECHNICIAN);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiSuggestionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ai</a> &gt; <span class="el_source">AiSuggestionService.java</span></div><h1>AiSuggestionService.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ai;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sn.senetech.itsn.ai.AiDtos.ReviewRequest;
+import sn.senetech.itsn.ai.AiDtos.SuggestionResponse;
+import sn.senetech.itsn.auth.CurrentUserService;
+import sn.senetech.itsn.common.AuditService;
+import sn.senetech.itsn.common.BusinessException;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.config.AppProperties;
+import sn.senetech.itsn.domain.*;
+import sn.senetech.itsn.notification.NotificationService;
+import sn.senetech.itsn.repository.*;
+import sn.senetech.itsn.ticket.PriorityMatrix;
+import sn.senetech.itsn.ticket.SlaService;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+/**
+ * Orchestration du pipeline agentique côté métier :
+ * garde-fous (activation, budget journalier) → exécution de l'agent (ou repli heuristique) →
+ * enregistrement de la proposition → revue humaine → application contrôlée au ticket.
+ */
+@Service
+public class AiSuggestionService {
+
+<span class="fc" id="L37">    private static final Logger log = LoggerFactory.getLogger(AiSuggestionService.class);</span>
+
+    private final AiSuggestionRepository suggestions;
+    private final TicketRepository tickets;
+    private final CategoryRepository categories;
+    private final UserRepository users;
+    private final TicketHistoryRepository history;
+    private final ClaudeTriageAgent claudeAgent;
+    private final HeuristicTriageAgent heuristicAgent;
+    private final SlaService slaService;
+    private final CurrentUserService currentUser;
+    private final NotificationService notifications;
+    private final AuditService audit;
+    private final AppProperties.Ai ai;
+
+    public AiSuggestionService(AiSuggestionRepository suggestions, TicketRepository tickets, CategoryRepository categories,
+                               UserRepository users, TicketHistoryRepository history, ClaudeTriageAgent claudeAgent,
+                               HeuristicTriageAgent heuristicAgent, SlaService slaService, CurrentUserService currentUser,
+<span class="fc" id="L55">                               NotificationService notifications, AuditService audit, AppProperties properties) {</span>
+<span class="fc" id="L56">        this.suggestions = suggestions; this.tickets = tickets; this.categories = categories; this.users = users;</span>
+<span class="fc" id="L57">        this.history = history; this.claudeAgent = claudeAgent; this.heuristicAgent = heuristicAgent; this.slaService = slaService;</span>
+<span class="fc" id="L58">        this.currentUser = currentUser; this.notifications = notifications; this.audit = audit; this.ai = properties.ai();</span>
+<span class="fc" id="L59">    }</span>
+
+    public boolean aiAvailable() {
+<span class="pc bpc" id="L62" title="5 of 6 branches missed.">        return ai.enabled() &amp;&amp; ai.apiKey() != null &amp;&amp; !ai.apiKey().isBlank();</span>
+    }
+
+    public BigDecimal spentToday() {
+<span class="fc" id="L66">        Instant startOfDay = LocalDate.now(ZoneOffset.UTC).atStartOfDay().toInstant(ZoneOffset.UTC);</span>
+<span class="fc" id="L67">        return suggestions.sumCostSince(startOfDay);</span>
+    }
+
+    public boolean budgetExceeded() {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        return spentToday().compareTo(ai.dailyBudgetUsd()) &gt;= 0;</span>
+    }
+
+    /**
+     * Lance le triage d'un ticket. {@code forceFallback} impose la simulation locale (démonstration sans clé API).
+     * La proposition est enregistrée avec le statut PENDING (ou FAILED) et n'est jamais appliquée ici.
+     */
+    @Transactional
+    public SuggestionResponse triage(Long ticketId, boolean forceFallback) {
+<span class="pc" id="L80">        Ticket ticket = tickets.findById(ticketId).orElseThrow(() -&gt; new NotFoundException(&quot;Ticket&quot;, ticketId));</span>
+<span class="pc bpc" id="L81" title="2 of 4 branches missed.">        if (ticket.getStatus().isTerminal() || ticket.getStatus() == TicketStatus.RESOLVED) {</span>
+<span class="nc" id="L82">            throw new BusinessException(&quot;Le triage ne concerne que les tickets ouverts&quot;);</span>
+        }
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        boolean hasPending = suggestions.findByTicketIdOrderByCreatedAtDesc(ticketId).stream().anyMatch(s -&gt; s.getStatus() == SuggestionStatus.PENDING);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (hasPending) throw new BusinessException(&quot;Une proposition est déjà en attente de validation pour ce ticket&quot;);</span>
+
+        TriageAgent agent;
+<span class="pc bpc" id="L88" title="3 of 4 branches missed.">        if (forceFallback || !aiAvailable()) {</span>
+<span class="fc" id="L89">            agent = heuristicAgent;</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        } else if (budgetExceeded()) {</span>
+<span class="nc" id="L91">            log.warn(&quot;Budget IA journalier atteint ({} USD) : repli heuristique&quot;, ai.dailyBudgetUsd());</span>
+<span class="nc" id="L92">            agent = heuristicAgent;</span>
+        } else {
+<span class="nc" id="L94">            agent = claudeAgent;</span>
+        }
+
+<span class="fc" id="L97">        TriageResult result = agent.triage(ticket);</span>
+<span class="fc" id="L98">        AiSuggestion s = new AiSuggestion();</span>
+<span class="fc" id="L99">        s.setTicket(ticket);</span>
+<span class="fc" id="L100">        s.setModel(result.model());</span>
+<span class="fc" id="L101">        s.setToolCalls(result.toolCalls());</span>
+<span class="fc" id="L102">        s.setInputTokens(result.inputTokens());</span>
+<span class="fc" id="L103">        s.setOutputTokens(result.outputTokens());</span>
+<span class="fc" id="L104">        s.setLatencyMs((int) Math.min(Integer.MAX_VALUE, result.latencyMs()));</span>
+<span class="fc" id="L105">        s.setEstimatedCostUsd(estimateCost(result.inputTokens(), result.outputTokens()));</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        s.setRawResponse(result.rawResponse() == null ? null : truncate(result.rawResponse(), 20000));</span>
+
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (result.isSuccess()) {</span>
+<span class="fc" id="L109">            TriageOutput out = result.output();</span>
+<span class="fc" id="L110">            s.setStatus(SuggestionStatus.PENDING);</span>
+<span class="fc" id="L111">            s.setSuggestedCategory(categories.findByCode(out.categoryCode()).orElse(null));</span>
+<span class="fc" id="L112">            s.setSuggestedImpact(out.impact().shortValue());</span>
+<span class="fc" id="L113">            s.setSuggestedUrgency(out.urgency().shortValue());</span>
+<span class="fc" id="L114">            s.setSuggestedPriority(PriorityMatrix.compute(out.impact(), out.urgency()));</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">            if (out.suggestedTechnicianId() != null) {</span>
+                // Validation côté serveur : le technicien proposé doit exister, être actif et avoir le bon rôle
+<span class="fc" id="L117">                users.findById(out.suggestedTechnicianId())</span>
+<span class="pc bpc" id="L118" title="2 of 4 branches missed.">                    .filter(u -&gt; u.getRole() == Role.TECHNICIAN &amp;&amp; u.isActive())</span>
+<span class="fc" id="L119">                    .ifPresent(s::setSuggestedAssignee);</span>
+            }
+<span class="fc" id="L121">            s.setSummary(out.summary());</span>
+<span class="fc" id="L122">            s.setRationale(out.rationale());</span>
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">            if (out.relatedArticleIds() != null &amp;&amp; !out.relatedArticleIds().isEmpty()) {</span>
+<span class="nc" id="L124">                s.setRelatedArticleIds(out.relatedArticleIds().stream().filter(Objects::nonNull).map(String::valueOf).collect(Collectors.joining(&quot;,&quot;)));</span>
+            }
+<span class="fc" id="L126">        } else {</span>
+<span class="nc" id="L127">            s.setStatus(SuggestionStatus.FAILED);</span>
+<span class="nc" id="L128">            s.setErrorMessage(result.error());</span>
+        }
+<span class="fc" id="L130">        s = suggestions.save(s);</span>
+<span class="fc" id="L131">        audit.record(currentUser.currentUserId(), &quot;AI_TRIAGE_RUN&quot;, &quot;TICKET&quot;, ticketId,</span>
+<span class="fc" id="L132">            &quot;provider=%s status=%s tools=%d cost=%s&quot;.formatted(result.model(), s.getStatus(), result.toolCalls(), s.getEstimatedCostUsd()));</span>
+<span class="fc" id="L133">        return SuggestionResponse.from(s);</span>
+    }
+
+    /** Décision humaine : seule voie d'application d'une proposition au ticket. */
+    @Transactional
+    public SuggestionResponse review(Long suggestionId, ReviewRequest req) {
+<span class="pc" id="L139">        AiSuggestion s = suggestions.findById(suggestionId).orElseThrow(() -&gt; new NotFoundException(&quot;Proposition&quot;, suggestionId));</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (s.getStatus() != SuggestionStatus.PENDING) throw new BusinessException(&quot;Cette proposition a déjà été traitée&quot;);</span>
+<span class="fc" id="L141">        User reviewer = currentUser.currentUser();</span>
+<span class="fc" id="L142">        Ticket t = s.getTicket();</span>
+<span class="pc bpc" id="L143" title="2 of 4 branches missed.">        if (t.getStatus().isTerminal() || t.getStatus() == TicketStatus.RESOLVED) throw new BusinessException(&quot;Le ticket n'est plus ouvert&quot;);</span>
+
+<span class="fc" id="L145">        boolean applyCategory = false, applyPriority = false, applyAssignee = false;</span>
+<span class="pc bpc" id="L146" title="2 of 3 branches missed.">        switch (req.decision()) {</span>
+<span class="nc" id="L147">            case ACCEPT -&gt; { applyCategory = true; applyPriority = true; applyAssignee = true; }</span>
+<span class="fc" id="L148">            case PARTIAL -&gt; { applyCategory = req.category(); applyPriority = req.priority(); applyAssignee = req.assignee(); }</span>
+            case REJECT -&gt; { /* rien n'est appliqué */ }
+        }
+
+<span class="pc bpc" id="L152" title="4 of 8 branches missed.">        if (applyCategory &amp;&amp; s.getSuggestedCategory() != null &amp;&amp; !Objects.equals(s.getSuggestedCategory().getId(), t.getCategory() == null ? null : t.getCategory().getId())) {</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">            history.save(TicketHistory.of(t, reviewer, &quot;category&quot;, t.getCategory() == null ? null : t.getCategory().getCode(), s.getSuggestedCategory().getCode()));</span>
+<span class="fc" id="L154">            t.setCategory(s.getSuggestedCategory());</span>
+        }
+<span class="pc bpc" id="L156" title="3 of 6 branches missed.">        if (applyPriority &amp;&amp; s.getSuggestedImpact() != null &amp;&amp; s.getSuggestedUrgency() != null) {</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            if (s.getSuggestedImpact() != t.getImpact()) { history.save(TicketHistory.of(t, reviewer, &quot;impact&quot;, t.getImpact(), s.getSuggestedImpact())); t.setImpact(s.getSuggestedImpact()); }</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">            if (s.getSuggestedUrgency() != t.getUrgency()) { history.save(TicketHistory.of(t, reviewer, &quot;urgency&quot;, t.getUrgency(), s.getSuggestedUrgency())); t.setUrgency(s.getSuggestedUrgency()); }</span>
+<span class="fc" id="L159">            Priority p = PriorityMatrix.compute(t.getImpact(), t.getUrgency());</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">            if (p != t.getPriority()) {</span>
+<span class="fc" id="L161">                history.save(TicketHistory.of(t, reviewer, &quot;priority&quot;, t.getPriority(), p));</span>
+<span class="fc" id="L162">                t.setPriority(p);</span>
+<span class="fc" id="L163">                slaService.applyDeadlines(t);</span>
+            }
+        }
+<span class="pc bpc" id="L166" title="5 of 6 branches missed.">        if (applyAssignee &amp;&amp; s.getSuggestedAssignee() != null &amp;&amp; s.getSuggestedAssignee().isActive()) {</span>
+<span class="nc bnc" id="L167" title="All 4 branches missed.">            if (t.getAssignee() == null || !t.getAssignee().getId().equals(s.getSuggestedAssignee().getId())) {</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                history.save(TicketHistory.of(t, reviewer, &quot;assignee&quot;, t.getAssignee() == null ? null : t.getAssignee().getFullName(), s.getSuggestedAssignee().getFullName()));</span>
+<span class="nc" id="L169">                t.setAssignee(s.getSuggestedAssignee());</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">                if (t.getStatus() == TicketStatus.NEW) {</span>
+<span class="nc" id="L171">                    history.save(TicketHistory.of(t, reviewer, &quot;status&quot;, TicketStatus.NEW, TicketStatus.ASSIGNED));</span>
+<span class="nc" id="L172">                    t.setStatus(TicketStatus.ASSIGNED);</span>
+                }
+<span class="nc" id="L174">                notifications.ticketAssigned(t);</span>
+            }
+        }
+<span class="fc" id="L177">        tickets.save(t);</span>
+
+<span class="pc bpc" id="L179" title="2 of 3 branches missed.">        s.setStatus(switch (req.decision()) { case ACCEPT -&gt; SuggestionStatus.ACCEPTED; case PARTIAL -&gt; SuggestionStatus.PARTIAL; case REJECT -&gt; SuggestionStatus.REJECTED; });</span>
+<span class="fc" id="L180">        s.setReviewedBy(reviewer);</span>
+<span class="fc" id="L181">        s.setReviewedAt(Instant.now());</span>
+<span class="fc" id="L182">        s.setReviewComment(req.comment());</span>
+<span class="fc" id="L183">        audit.record(reviewer.getId(), &quot;AI_SUGGESTION_REVIEWED&quot;, &quot;AI_SUGGESTION&quot;, s.getId(), &quot;decision=&quot; + req.decision());</span>
+<span class="fc" id="L184">        return SuggestionResponse.from(suggestions.save(s));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;SuggestionResponse&gt; pending() {
+<span class="fc" id="L189">        return suggestions.findByStatusOrderByCreatedAtDesc(SuggestionStatus.PENDING).stream().map(SuggestionResponse::from).toList();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;SuggestionResponse&gt; forTicket(Long ticketId) {
+<span class="nc" id="L194">        return suggestions.findByTicketIdOrderByCreatedAtDesc(ticketId).stream().map(SuggestionResponse::from).toList();</span>
+    }
+
+    public AiDtos.AiStatus status() {
+<span class="fc" id="L198">        return new AiDtos.AiStatus(aiAvailable(), ai.provider(), ai.model(), ai.dailyBudgetUsd(), spentToday(),</span>
+<span class="pc bpc" id="L199" title="3 of 4 branches missed.">            suggestions.countByStatus(SuggestionStatus.PENDING), !aiAvailable() || budgetExceeded());</span>
+    }
+
+    BigDecimal estimateCost(int inputTokens, int outputTokens) {
+<span class="fc" id="L203">        BigDecimal million = BigDecimal.valueOf(1_000_000);</span>
+<span class="fc" id="L204">        BigDecimal in = ai.priceInputPerMtok().multiply(BigDecimal.valueOf(inputTokens)).divide(million, 6, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L205">        BigDecimal out = ai.priceOutputPerMtok().multiply(BigDecimal.valueOf(outputTokens)).divide(million, 6, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L206">        return in.add(out);</span>
+    }
+
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">    private static String truncate(String s, int max) { return s.length() &gt; max ? s.substring(0, max) : s; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

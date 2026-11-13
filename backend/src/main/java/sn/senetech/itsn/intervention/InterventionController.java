@@ -22,6 +22,7 @@ import java.util.List;
 
 /** Planification et compte rendu des interventions (sur site ou à distance) rattachées à un ticket. */
 @RestController
+@Transactional(readOnly = true) // les réponses sont construites à partir d'associations chargées paresseusement
 @RequestMapping("/api/interventions")
 public class InterventionController {
 

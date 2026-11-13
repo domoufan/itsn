@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ticket</a> &gt; <span class="el_source">SlaService.java</span></div><h1>SlaService.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ticket;
+
+import org.springframework.stereotype.Service;
+import sn.senetech.itsn.common.NotFoundException;
+import sn.senetech.itsn.domain.Priority;
+import sn.senetech.itsn.domain.SlaPolicy;
+import sn.senetech.itsn.domain.Ticket;
+import sn.senetech.itsn.repository.SlaPolicyRepository;
+
+import java.time.Duration;
+import java.time.Instant;
+
+/** Calcule les échéances SLA d'un ticket à partir de la politique associée à sa priorité. */
+@Service
+public class SlaService {
+
+    private final SlaPolicyRepository repository;
+
+<span class="fc" id="L19">    public SlaService(SlaPolicyRepository repository) {</span>
+<span class="fc" id="L20">        this.repository = repository;</span>
+<span class="fc" id="L21">    }</span>
+
+    public SlaPolicy policyFor(Priority priority) {
+<span class="pc" id="L24">        return repository.findByPriority(priority).orElseThrow(() -&gt; new NotFoundException(&quot;Politique SLA&quot;, priority));</span>
+    }
+
+    /** (Re)calcule les échéances à partir de la date de création du ticket. */
+    public void applyDeadlines(Ticket ticket) {
+<span class="fc" id="L29">        SlaPolicy policy = policyFor(ticket.getPriority());</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        Instant base = ticket.getCreatedAt() == null ? Instant.now() : ticket.getCreatedAt();</span>
+<span class="fc" id="L31">        ticket.setResponseDueAt(base.plus(Duration.ofMinutes(policy.getResponseMinutes())));</span>
+<span class="fc" id="L32">        ticket.setResolutionDueAt(base.plus(Duration.ofMinutes(policy.getResolutionMinutes())));</span>
+<span class="fc" id="L33">    }</span>
+
+    public static boolean isResponseBreached(Ticket t, Instant now) {
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        Instant ref = t.getFirstResponseAt() != null ? t.getFirstResponseAt() : now;</span>
+<span class="fc" id="L37">        return ref.isAfter(t.getResponseDueAt());</span>
+    }
+
+    public static boolean isResolutionBreached(Ticket t, Instant now) {
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        Instant ref = t.getResolvedAt() != null ? t.getResolvedAt() : now;</span>
+<span class="fc" id="L42">        return ref.isAfter(t.getResolutionDueAt());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

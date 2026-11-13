@@ -160,4 +160,16 @@ class TicketFlowIT extends ApiTestSupport {
         assertThat(get("/actuator/metrics", null).statusCode()).isEqualTo(401);
         assertThat(get("/actuator/metrics", login("admin@test.example")).statusCode()).isEqualTo(200);
     }
+
+    @Test @Order(14)
+    @DisplayName("TI-13 (régression AN-08) Les listes construites à partir d'associations paresseuses répondent 200")
+    void lazyAssociationsAreLoadedInsideTransaction() {
+        String token = login("manager@test.example");
+        assertThat(get("/api/users/technicians", token).statusCode()).isEqualTo(200);
+        assertThat(get("/api/users", token).statusCode()).isEqualTo(200);
+        assertThat(get("/api/equipment", token).statusCode()).isEqualTo(200);
+        assertThat(get("/api/interventions", token).statusCode()).isEqualTo(200);
+        assertThat(get("/api/kb/articles?q=test", token).statusCode()).isEqualTo(200);
+        assertThat(get("/api/users/technicians", token).body()).contains("Tech Réseau");
+    }
 }

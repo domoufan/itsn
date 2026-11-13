@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.config;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Sécurité de l'API : authentification sans état par JWT signé (HMAC-SHA256), autorisations par rôle,
+ * CORS restreint aux origines déclarées, CSRF désactivé (API stateless consommée par un SPA avec jeton porteur).
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final AppProperties properties;
+
+<span class="fc" id="L42">    public SecurityConfig(AppProperties properties) {</span>
+<span class="fc" id="L43">        this.properties = properties;</span>
+<span class="fc" id="L44">    }</span>
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
+<span class="fc" id="L48">        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();</span>
+<span class="fc" id="L49">        authoritiesConverter.setAuthoritiesClaimName(&quot;roles&quot;);</span>
+<span class="fc" id="L50">        authoritiesConverter.setAuthorityPrefix(&quot;ROLE_&quot;);</span>
+<span class="fc" id="L51">        JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();</span>
+<span class="fc" id="L52">        jwtConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);</span>
+
+<span class="fc" id="L54">        http</span>
+<span class="fc" id="L55">            .csrf(csrf -&gt; csrf.disable())</span>
+<span class="fc" id="L56">            .cors(Customizer.withDefaults())</span>
+<span class="fc" id="L57">            .sessionManagement(sm -&gt; sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L58">            .headers(h -&gt; h.frameOptions(f -&gt; f.deny()))</span>
+<span class="fc" id="L59">            .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L60">                .requestMatchers(HttpMethod.POST, &quot;/api/auth/login&quot;).permitAll()</span>
+<span class="fc" id="L61">                .requestMatchers(&quot;/actuator/health&quot;, &quot;/actuator/health/**&quot;, &quot;/actuator/info&quot;).permitAll()</span>
+<span class="fc" id="L62">                .requestMatchers(&quot;/v3/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;).permitAll()</span>
+<span class="fc" id="L63">                .requestMatchers(&quot;/actuator/**&quot;).hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L64">                .requestMatchers(&quot;/api/**&quot;).authenticated()</span>
+<span class="fc" id="L65">                .anyRequest().denyAll())</span>
+<span class="fc" id="L66">            .oauth2ResourceServer(oauth -&gt; oauth.jwt(jwt -&gt; jwt</span>
+<span class="fc" id="L67">                .decoder(jwtDecoder)</span>
+<span class="fc" id="L68">                .jwtAuthenticationConverter(jwtConverter)));</span>
+<span class="fc" id="L69">        return http.build();</span>
+    }
+
+    @Bean
+    SecretKey jwtSecretKey() {
+<span class="fc" id="L74">        return new SecretKeySpec(properties.security().jwtSecret().getBytes(StandardCharsets.UTF_8), &quot;HmacSHA256&quot;);</span>
+    }
+
+    @Bean
+    JwtEncoder jwtEncoder(SecretKey key) {
+<span class="fc" id="L79">        return new NimbusJwtEncoder(new ImmutableSecret&lt;&gt;(key));</span>
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(SecretKey key) {
+<span class="fc" id="L84">        return NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();</span>
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+<span class="fc" id="L89">        return new BCryptPasswordEncoder(12);</span>
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+<span class="fc" id="L94">        CorsConfiguration cfg = new CorsConfiguration();</span>
+<span class="fc" id="L95">        cfg.setAllowedOrigins(properties.security().corsAllowedOrigins());</span>
+<span class="fc" id="L96">        cfg.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
+<span class="fc" id="L97">        cfg.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Content-Type&quot;, &quot;Accept&quot;));</span>
+<span class="fc" id="L98">        cfg.setExposedHeaders(List.of(&quot;Location&quot;));</span>
+<span class="fc" id="L99">        cfg.setMaxAge(3600L);</span>
+<span class="fc" id="L100">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="fc" id="L101">        source.registerCorsConfiguration(&quot;/api/**&quot;, cfg);</span>
+<span class="fc" id="L102">        return source;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

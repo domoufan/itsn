@@ -20,6 +20,7 @@ import java.time.Instant;
 
 /** Base de connaissances : procédures et solutions réutilisables, consultables par tous les utilisateurs. */
 @RestController
+@Transactional(readOnly = true) // les réponses sont construites à partir d'associations chargées paresseusement
 @RequestMapping("/api/kb/articles")
 public class KnowledgeController {
 
@@ -63,6 +64,7 @@ public class KnowledgeController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','TECHNICIAN')")
+    @Transactional
     public ArticleResponse create(@Valid @RequestBody ArticleRequest req) {
         KnowledgeArticle a = new KnowledgeArticle();
         a.setAuthor(currentUser.currentUser());
@@ -72,6 +74,7 @@ public class KnowledgeController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','TECHNICIAN')")
+    @Transactional
     public ArticleResponse update(@PathVariable Long id, @Valid @RequestBody ArticleRequest req) {
         KnowledgeArticle a = articles.findById(id).orElseThrow(() -> new NotFoundException("Article", id));
         apply(a, req);
@@ -80,6 +83,7 @@ public class KnowledgeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @Transactional
     public void delete(@PathVariable Long id) {
         if (!articles.existsById(id)) throw new NotFoundException("Article", id);
         articles.deleteById(id);

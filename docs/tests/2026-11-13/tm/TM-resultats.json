@@ -1,0 +1,94 @@
+[
+ {
+  "id": "TM-01",
+  "scenario": "Connexion avec chaque compte de démonstration ; menu adapté au rôle ; déconnexion",
+  "expected": "Navigation conforme à la matrice des droits",
+  "observed": "user : Tickets, Base de connaissances ; tech : Tableau de bord, Tickets, Planning, Équipements, Base de connaissances ; manager : Tableau de bord, Tickets, Planning, Équipements, Base de connaissances, Propositions IA ; admin : Tableau de bord, Tickets, Planning, Équipements, Base de connaissances, Propositions IA, Administration ; déconnexion : retour à /login pour chaque rôle",
+  "status": "Réussi",
+  "shots": [
+   "TM-01-user.png",
+   "TM-01-tech.png",
+   "TM-01-manager.png",
+   "TM-01-admin.png"
+  ]
+ },
+ {
+  "id": "TM-02",
+  "scenario": "L'administrateur modifie la politique P2 (résolution < prise en compte) puis une valeur valide",
+  "expected": "Message d'erreur explicite ; puis enregistrement",
+  "observed": "refus : « Le délai de résolution doit être supérieur ou égal au délai de réponse » ; valide : « Politique SLA mise à jour »",
+  "status": "Réussi",
+  "shots": [
+   "TM-02-refus.png",
+   "TM-02-valide.png"
+  ]
+ },
+ {
+  "id": "TM-03",
+  "scenario": "Planifier deux interventions chevauchantes pour le même technicien ; saisir un compte rendu vide puis complet",
+  "expected": "Refus du chevauchement ; refus du compte rendu vide ; intervention terminée",
+  "observed": "1re planification : « Intervention planifiée » ; 2e (10h-12h) : « Conflit de planning : le technicien a déjà une intervention sur ce créneau » ; CR vide : « Un compte rendu est obligatoire pour clore une intervention » ; CR complet : « Compte rendu enregistré »",
+  "status": "Réussi",
+  "shots": [
+   "TM-03-planifiee.png",
+   "TM-03-conflit.png",
+   "TM-03-cr-vide.png",
+   "TM-03-cr-ok.png"
+  ]
+ },
+ {
+  "id": "TM-04",
+  "scenario": "Changer la période du tableau de bord ; vérifier un indicateur à la main",
+  "expected": "Valeurs cohérentes avec le calcul manuel",
+  "observed": "tickets ouverts affichés 9 = liste filtrée openOnly 9 ; créés sur 7 j affichés « 7/1 » vs API 7",
+  "status": "Réussi",
+  "shots": [
+   "TM-04-7j.png"
+  ]
+ },
+ {
+  "id": "TM-05",
+  "scenario": "Créer un équipement avec un numéro existant ; filtrer par site ; garantie expirée",
+  "expected": "Refus du doublon ; filtre correct ; alerte visuelle",
+  "observed": "doublon : « Numéro d'inventaire déjà existant » ; sites affichés après filtre : ['Usine Rufisque'] ; lignes avec garantie expirée signalées : 4",
+  "status": "Réussi",
+  "shots": [
+   "TM-05-doublon.png",
+   "TM-05-filtre.png"
+  ]
+ },
+ {
+  "id": "TM-06",
+  "scenario": "Rechercher « imprimante » en demandeur et en technicien ; article non publié",
+  "expected": "Résultats pertinents ; l'article non publié n'apparaît qu'au personnel",
+  "observed": "technicien voit le brouillon : True ; résultats demandeur « imprimante » : ['Imprimante réseau hors ligne : procédure de diagnostic'] ; brouillon visible du demandeur : False",
+  "status": "Réussi",
+  "shots": [
+   "TM-06-technicien.png",
+   "TM-06-demandeur.png"
+  ]
+ },
+ {
+  "id": "TM-07",
+  "scenario": "Créer, affecter, résoudre un ticket avec EMAIL_ENABLED=true ; consulter les e-mails capturés",
+  "expected": "Trois e-mails reçus avec la référence",
+  "observed": "3 e-mail(s) portant INC-2026-00025 : ['[INC-2026-00025] Votre demande a été enregistrée', '[INC-2026-00025] Ticket affecté', '[INC-2026-00025] Ticket résolu']",
+  "status": "Réussi",
+  "shots": [
+   "TM-07-creation.png",
+   "TM-07-resolu.png"
+  ]
+ },
+ {
+  "id": "TM-08",
+  "scenario": "Parcours sur un écran de 1 280 px et sur une fenêtre étroite ; lecture des badges",
+  "expected": "Interface utilisable ; états lisibles par le texte",
+  "observed": "1280 px : 18 badges, tous avec texte : True ; 420 px (demandeur) : largeur de page 420 px ; sur mobile la navigation latérale reste affichée (limite connue : pas de menu repliable automatique)",
+  "status": "Réussi",
+  "shots": [
+   "TM-08-1280.png",
+   "TM-08-420.png",
+   "TM-08-420-form.png"
+  ]
+ }
+]

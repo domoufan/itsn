@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TicketDtos.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.ticket</a> &gt; <span class="el_source">TicketDtos.java</span></div><h1>TicketDtos.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.ticket;
+
+import jakarta.validation.constraints.*;
+import sn.senetech.itsn.domain.*;
+
+import java.time.Instant;
+import java.util.List;
+
+/** Objets d'échange de l'API tickets (requêtes validées et réponses). */
+public final class TicketDtos {
+    private TicketDtos() {}
+
+<span class="fc" id="L13">    public record CreateRequest(</span>
+            @NotNull TicketType type,
+            @NotBlank @Size(min = 5, max = 160) String title,
+            @NotBlank @Size(min = 10, max = 5000) String description,
+            Long categoryId,
+            @NotNull @Min(1) @Max(3) Integer impact,
+            @NotNull @Min(1) @Max(3) Integer urgency,
+            Long siteId,
+            Long equipmentId,
+            /** Réservé au personnel : créer un ticket pour le compte d'un demandeur. */
+            Long requesterId) {
+    }
+
+<span class="nc" id="L26">    public record UpdateRequest(</span>
+            @Size(min = 5, max = 160) String title,
+            @Size(min = 10, max = 5000) String description,
+            Long categoryId,
+            @Min(1) @Max(3) Integer impact,
+            @Min(1) @Max(3) Integer urgency,
+            Long siteId,
+            Long equipmentId) {
+    }
+
+<span class="fc" id="L36">    public record AssignRequest(@NotNull Long assigneeId, @Size(max = 500) String comment) {</span>
+    }
+
+<span class="fc" id="L39">    public record StatusChangeRequest(</span>
+            @NotNull TicketStatus status,
+            @Size(max = 2000) String comment,
+            @Size(max = 5000) String resolutionSummary) {
+    }
+
+<span class="fc" id="L45">    public record CommentRequest(@NotBlank @Size(max = 5000) String content, Boolean internal) {</span>
+<span class="nc" id="L46">        public boolean isInternal() { return Boolean.TRUE.equals(internal); }</span>
+    }
+
+<span class="fc" id="L49">    public record SatisfactionRequest(@NotNull @Min(1) @Max(5) Integer score) {</span>
+    }
+
+<span class="fc" id="L52">    public record UserRef(Long id, String fullName, String email) {</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        public static UserRef from(User u) { return u == null ? null : new UserRef(u.getId(), u.getFullName(), u.getEmail()); }</span>
+    }
+
+<span class="fc" id="L56">    public record CategoryRef(Long id, String code, String name) {</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        public static CategoryRef from(Category c) { return c == null ? null : new CategoryRef(c.getId(), c.getCode(), c.getName()); }</span>
+    }
+
+<span class="fc" id="L60">    public record SiteRef(Long id, String name, String clientName) {</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        public static SiteRef from(Site s) { return s == null ? null : new SiteRef(s.getId(), s.getName(), s.getClientName()); }</span>
+    }
+
+<span class="nc" id="L64">    public record EquipmentRef(Long id, String assetTag, EquipmentType type, String brand, String model) {</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        public static EquipmentRef from(Equipment e) { return e == null ? null : new EquipmentRef(e.getId(), e.getAssetTag(), e.getType(), e.getBrand(), e.getModel()); }</span>
+    }
+
+<span class="fc" id="L68">    public record TicketResponse(</span>
+            Long id, String reference, TicketType type, String title, String description,
+            CategoryRef category, int impact, int urgency, Priority priority, TicketStatus status,
+            UserRef requester, UserRef assignee, SiteRef site, EquipmentRef equipment,
+            Instant createdAt, Instant updatedAt, Instant responseDueAt, Instant resolutionDueAt,
+            Instant firstResponseAt, Instant resolvedAt, Instant closedAt,
+            boolean slaResponseBreached, boolean slaResolutionBreached,
+            String resolutionSummary, Short satisfactionScore, List&lt;TicketStatus&gt; allowedTransitions) {
+
+        public static TicketResponse from(Ticket t) {
+<span class="fc" id="L78">            List&lt;TicketStatus&gt; allowed = java.util.Arrays.stream(TicketStatus.values())</span>
+<span class="fc bfc" id="L79" title="All 4 branches covered.">                .filter(s -&gt; t.getStatus().canTransitionTo(s) &amp;&amp; s != t.getStatus()).toList();</span>
+<span class="fc" id="L80">            return new TicketResponse(t.getId(), t.getReference(), t.getType(), t.getTitle(), t.getDescription(),</span>
+<span class="fc" id="L81">                CategoryRef.from(t.getCategory()), t.getImpact(), t.getUrgency(), t.getPriority(), t.getStatus(),</span>
+<span class="fc" id="L82">                UserRef.from(t.getRequester()), UserRef.from(t.getAssignee()), SiteRef.from(t.getSite()), EquipmentRef.from(t.getEquipment()),</span>
+<span class="fc" id="L83">                t.getCreatedAt(), t.getUpdatedAt(), t.getResponseDueAt(), t.getResolutionDueAt(),</span>
+<span class="fc" id="L84">                t.getFirstResponseAt(), t.getResolvedAt(), t.getClosedAt(),</span>
+<span class="fc" id="L85">                t.isSlaResponseBreached(), t.isSlaResolutionBreached(),</span>
+<span class="fc" id="L86">                t.getResolutionSummary(), t.getSatisfactionScore(), allowed);</span>
+        }
+    }
+
+<span class="nc" id="L90">    public record TicketSummary(</span>
+            Long id, String reference, TicketType type, String title, CategoryRef category, Priority priority,
+            TicketStatus status, UserRef requester, UserRef assignee, SiteRef site, Instant createdAt,
+            Instant resolutionDueAt, boolean slaResponseBreached, boolean slaResolutionBreached) {
+        public static TicketSummary from(Ticket t) {
+<span class="nc" id="L95">            return new TicketSummary(t.getId(), t.getReference(), t.getType(), t.getTitle(), CategoryRef.from(t.getCategory()),</span>
+<span class="nc" id="L96">                t.getPriority(), t.getStatus(), UserRef.from(t.getRequester()), UserRef.from(t.getAssignee()), SiteRef.from(t.getSite()),</span>
+<span class="nc" id="L97">                t.getCreatedAt(), t.getResolutionDueAt(), t.isSlaResponseBreached(), t.isSlaResolutionBreached());</span>
+        }
+    }
+
+<span class="nc" id="L101">    public record CommentResponse(Long id, UserRef author, String content, boolean internal, Instant createdAt) {</span>
+        public static CommentResponse from(TicketComment c) {
+<span class="nc" id="L103">            return new CommentResponse(c.getId(), UserRef.from(c.getAuthor()), c.getContent(), c.isInternal(), c.getCreatedAt());</span>
+        }
+    }
+
+<span class="fc" id="L107">    public record HistoryResponse(Long id, UserRef changedBy, String field, String oldValue, String newValue, Instant changedAt) {</span>
+        public static HistoryResponse from(TicketHistory h) {
+<span class="fc" id="L109">            return new HistoryResponse(h.getId(), UserRef.from(h.getChangedBy()), h.getField(), h.getOldValue(), h.getNewValue(), h.getChangedAt());</span>
+        }
+    }
+
+<span class="fc" id="L113">    public record TicketFilter(TicketStatus status, Priority priority, TicketType type, Long assigneeId, Long requesterId,</span>
+                               Long siteId, Long categoryId, Boolean openOnly, Boolean slaBreached, String search) {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

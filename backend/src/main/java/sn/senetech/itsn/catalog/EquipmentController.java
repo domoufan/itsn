@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import sn.senetech.itsn.common.BusinessException;
 import sn.senetech.itsn.common.NotFoundException;
@@ -20,6 +21,7 @@ import java.util.List;
 
 /** Inventaire simplifié des équipements (CMDB) rattachés aux sites clients. */
 @RestController
+@Transactional(readOnly = true) // les réponses sont construites à partir d'associations chargées paresseusement
 @RequestMapping("/api/equipment")
 public class EquipmentController {
 
@@ -55,6 +57,7 @@ public class EquipmentController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','TECHNICIAN')")
+    @Transactional
     public EquipmentResponse create(@Valid @RequestBody EquipmentRequest req) {
         if (equipment.existsByAssetTag(req.assetTag())) throw new BusinessException("Numéro d'inventaire déjà existant");
         Equipment e = new Equipment();
@@ -64,6 +67,7 @@ public class EquipmentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','TECHNICIAN')")
+    @Transactional
     public EquipmentResponse update(@PathVariable Long id, @Valid @RequestBody EquipmentRequest req) {
         Equipment e = equipment.findById(id).orElseThrow(() -> new NotFoundException("Équipement", id));
         apply(e, req);

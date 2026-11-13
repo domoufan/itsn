@@ -219,6 +219,7 @@ Tableau : Difficultés rencontrées et solutions apportées
 | L'indicateur de santé du serveur de messagerie rendait toute l'application « DOWN » (503) lorsque le SMTP était injoignable | Indicateur mail désactivé (`management.health.mail.enabled=false`) : une panne de messagerie ne doit pas être confondue avec une panne de l'application |
 | Accès réseau restreint de l'environnement d'assistance IA (dépôt Maven d'abord inaccessible) | Autorisation du domaine Maven Central ; compilation et tests exécutés le 10/11/2026 (40 tests réussis) |
 | Google Fonts injoignable dans certains réseaux : icônes et polices absentes | Polices et icônes auto-hébergées dans le bundle Angular |
+| Avec `open-in-view` désactivé (choix de performance), certains contrôleurs de lecture accédaient à des associations paresseuses hors transaction (`LazyInitializationException`), ce que seuls les tests d'interface ont révélé | Contrôleurs de lecture rendus transactionnels (`@Transactional(readOnly = true)`) ; test d'intégration TI-13 ajouté |
 
 ## Réalisations personnelles, composants tiers et éléments assistés par IA
 

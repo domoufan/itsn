@@ -38,6 +38,7 @@ Tableau : Journal des usages de l'IA (extrait ; à compléter jusqu'au dépôt f
 | 10/11/2026 — Claude | Renommage du projet en ITSN ; compilation Maven et exécution des 40 tests backend ; correction de deux anomalies (AN-04, AN-05) | Rapports Surefire et JaCoCo conservés ; corrections relues |
 | 10/11/2026 — Claude | Refonte UI/UX : charte graphique (vert ServiceNow / bleu nuit), thème Material 3, composants de visualisation (anneaux, donut, compteurs), animations, polices auto-hébergées | Construction de production et tests Vitest réussis ; captures d'écran vérifiées visuellement |
 | 10/11/2026 — Claude | Exécution des tests TS-01, TS-02, TS-03, TS-05, TP-01 ; intégration des résultats et captures dans le mémoire | Sorties conservées dans `docs/tests/2026-11-10/` |
+| 13/11/2026 — Claude | Script Playwright rejouant les scénarios TM-01 à TM-08 ; détection et correction de l'anomalie AN-08 ; test de non-régression TI-13 ; évaluation du triage en mode repli | Résultats relus ; captures vérifiées ; suite backend relancée (41/41) |
 | [date] — [outil] | [usage] | [vérification] |
 
 <<<pagebreak>>>
@@ -52,18 +53,18 @@ Tableau : Matrice de traçabilité exigences → réalisation → tests
 | EF-03 Priorité = matrice impact × urgence | `PriorityMatrix`, `TicketService.update` | TU-01, TI-02, TU-F02 (réussi 08/11) — réussi (10/11/2026) |
 | EF-04 Machine à états, résumé obligatoire | `TicketStatus`, `TicketService.transition` | TU-02, TI-06 — réussi (10/11/2026) |
 | EF-05 Échéances SLA et dépassements | `SlaService`, `SlaMonitorJob`, colonnes `*_due_at`, `sla_*_breached` | TU-03, TI-05, TI-06b — réussi (10/11/2026) — heures calendaires |
-| EF-06 Paramétrage SLA | `SlaPolicyController` | TM-02 — [statut] |
+| EF-06 Paramétrage SLA | `SlaPolicyController` | TM-02 — TM-02 réussi (13/11/2026) |
 | EF-07 Affectation par le responsable | `TicketService.assign` | TI-03, TI-04 — réussi (10/11/2026) |
-| EF-08 Planification sans chevauchement | `InterventionController.plan`, `countOverlapping` | TM-03 — [statut] |
-| EF-09 Compte rendu d'intervention | `InterventionController.report` | TM-03 — [statut] |
+| EF-08 Planification sans chevauchement | `InterventionController.plan`, `countOverlapping` | TM-03 — TM-03 réussi (13/11/2026) |
+| EF-09 Compte rendu d'intervention | `InterventionController.report` | TM-03 — TM-03 réussi (13/11/2026) |
 | EF-10 Tableau de bord | `DashboardController` | TI-11, TM-04 — TI-11 réussi (10/11/2026) |
-| EF-11 Inventaire | `EquipmentController` | TM-05 — [statut] |
-| EF-12 Triage IA structuré et validé | `ClaudeTriageAgent`, `TriageTools`, `AiSuggestionService.triage` | TU-04, TI-21, TE-01 — TU-04, TI-21 réussis ; TE-01 à exécuter (10/11/2026) — échantillon de 30 cas |
+| EF-11 Inventaire | `EquipmentController` | TM-05 — TM-05 réussi (13/11/2026) |
+| EF-12 Triage IA structuré et validé | `ClaudeTriageAgent`, `TriageTools`, `AiSuggestionService.triage` | TU-04, TI-21 réussis (10/11) ; TE-01 repli exécuté (13/11 : 30/30, catégorie 87 %) ; TE-01 agent réel à exécuter — échantillon de 30 cas |
 | EF-13 Validation humaine obligatoire | `AiSuggestionService.review`, `AiController` (`@PreAuthorize`) | TI-21 à TI-24 — réussi (10/11/2026) |
-| EF-14 Base de connaissances | `KnowledgeController` | TM-06 — [statut] — recherche simple |
+| EF-14 Base de connaissances | `KnowledgeController` | TM-06 — TM-06 réussi (13/11/2026) — recherche simple |
 | EF-15 Commentaires et notes internes | `TicketService.comment`, filtrage par rôle | TI-07 — réussi (10/11/2026) |
 | EF-16 Historique | `TicketHistory`, appels dans `TicketService` et `AiSuggestionService` | TI-04 — réussi (10/11/2026) |
-| EF-17 Notifications e-mail | `NotificationService` | TM-07 — [statut] — désactivées par défaut |
+| EF-17 Notifications e-mail | `NotificationService` | TM-07 — TM-07 réussi (13/11/2026) — désactivées par défaut |
 | EF-18 Satisfaction | `TicketService.rate` | TI-07 — réussi (10/11/2026) |
 | ENF-01 401 sans jeton | `SecurityConfig` | TI-10, TS-01 — réussi (10/11/2026) |
 | ENF-02 403 hors rôle, données filtrées | `@PreAuthorize`, contrôles des services, `TicketSpecifications` | TI-03, TI-08, TI-23 — réussi (10/11/2026) |
@@ -75,10 +76,10 @@ Tableau : Matrice de traçabilité exigences → réalisation → tests
 | ENF-08 Résistance aux détournements | Prompt système, balises de données, validation de sortie, outils en lecture seule | TE-01 (cas 30), TS-06 — [statut] |
 | ENF-09 Performance p95 < 500 ms | Index, pagination | TP-01 — réussi : p95 31 ms (10/11/2026) — mesure locale |
 | ENF-10 Supervision | Actuator, sondes Render | TI-12, TD-02 — TI-12 réussi ; TD-02 à exécuter (10/11/2026) |
-| ENF-11 Sauvegarde/restauration | Neon PITR, `pg_dump`, guide | TD-03 — [statut] |
+| ENF-11 Sauvegarde/restauration | Neon PITR, `pg_dump`, guide | TD-03 — TD-03 réussi en local (13/11/2026) |
 | ENF-12 Reproductibilité | `docker-compose.yml`, Dockerfiles, Flyway, README | TD-01 — [statut] |
 | ENF-13 Livraison bloquante, artefact unique | `ci.yml`, `cd.yml`, GHCR | TD-02, TD-04 — [statut] |
-| ENF-14 Ergonomie | Angular Material, libellés, badges texte + couleur, `NotifyService` | TU-F01 (réussi 08/11), TM-08 — [statut] |
+| ENF-14 Ergonomie | Angular Material, libellés, badges texte + couleur, `NotifyService` | TU-F01 (réussi 08/11), TM-08 réussi (13/11/2026) ; limite : navigation non repliée sur mobile |
 
 <<<pagebreak>>>
 # Annexe D — Suivi des retours de prélecture
@@ -216,3 +217,7 @@ Tableau : Preuves déjà disponibles à la date de rédaction
 | `mvn verify` backend | 10/11/2026 | 40 tests, 0 échec (7 classes) ; JaCoCo 53 % lignes / 75 % classes ; rapports dans `docs/tests/2026-11-10/` |
 | Tests de sécurité et de performance | 10/11/2026 | TS-01, TS-02, TS-03, TS-05, TP-01 : sorties `curl`/`psql` dans `docs/tests/2026-11-10/securite-perf/` |
 | Captures d'écran | 10/11/2026 | 10 écrans capturés par Playwright (1440 × 900) sur l'application locale, `docs/captures/` |
+| Scénarios TM-01 à TM-08 | 13/11/2026 | 8/8 réussis ; compte rendu `docs/tests/2026-11-13/tm/TM-resultats.md` et 19 captures datées |
+| Évaluation du triage (mode repli) | 13/11/2026 | 30 cas, `docs/tests/2026-11-13/eval/triage-20261113-175633.md` et `.csv` |
+| Sauvegarde / restauration TD-03 | 13/11/2026 | Journal `docs/tests/2026-11-13/restauration/TD-03.txt` |
+| `mvn verify` backend (après AN-08) | 13/11/2026 | 41 tests, 0 échec ; rapports `docs/tests/2026-11-13/surefire/` |

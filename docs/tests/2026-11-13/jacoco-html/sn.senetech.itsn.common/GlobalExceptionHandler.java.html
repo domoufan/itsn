@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ITSN - Backend</a> &gt; <a href="index.source.html" class="el_package">sn.senetech.itsn.common</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package sn.senetech.itsn.common;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Centralise la gestion des erreurs : messages clairs pour le client, aucune trace technique exposée,
+ * journalisation côté serveur des erreurs inattendues.
+ */
+@RestControllerAdvice
+<span class="fc" id="L27">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L29">    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity&lt;ApiError&gt; notFound(NotFoundException ex, HttpServletRequest req) {
+<span class="nc" id="L33">        return build(HttpStatus.NOT_FOUND, ex.getMessage(), req, null);</span>
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity&lt;ApiError&gt; noResource(NoResourceFoundException ex, HttpServletRequest req) {
+<span class="nc" id="L38">        return build(HttpStatus.NOT_FOUND, &quot;Ressource introuvable&quot;, req, null);</span>
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity&lt;ApiError&gt; business(BusinessException ex, HttpServletRequest req) {
+<span class="fc" id="L43">        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ApiError&gt; validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+<span class="fc" id="L48">        Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {</span>
+<span class="fc" id="L50">            fields.put(fe.getField(), fe.getDefaultMessage());</span>
+<span class="fc" id="L51">        }</span>
+<span class="fc" id="L52">        return build(HttpStatus.BAD_REQUEST, &quot;Données invalides&quot;, req, fields);</span>
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ApiError&gt; unreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+<span class="nc" id="L57">        return build(HttpStatus.BAD_REQUEST, &quot;Corps de requête illisible ou mal formé&quot;, req, null);</span>
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity&lt;ApiError&gt; badCredentials(BadCredentialsException ex, HttpServletRequest req) {
+<span class="fc" id="L62">        return build(HttpStatus.UNAUTHORIZED, &quot;Identifiants incorrects&quot;, req, null);</span>
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity&lt;ApiError&gt; forbidden(RuntimeException ex, HttpServletRequest req) {
+<span class="fc" id="L67">        return build(HttpStatus.FORBIDDEN, &quot;Accès refusé&quot;, req, null);</span>
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity&lt;ApiError&gt; illegalArgument(IllegalArgumentException ex, HttpServletRequest req) {
+<span class="nc" id="L72">        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req, null);</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ApiError&gt; unexpected(Exception ex, HttpServletRequest req) {
+<span class="nc" id="L77">        log.error(&quot;Erreur inattendue sur {} {}&quot;, req.getMethod(), req.getRequestURI(), ex);</span>
+<span class="nc" id="L78">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Erreur interne, veuillez réessayer&quot;, req, null);</span>
+    }
+
+    private ResponseEntity&lt;ApiError&gt; build(HttpStatus status, String message, HttpServletRequest req, Map&lt;String, String&gt; fields) {
+<span class="fc" id="L82">        ApiError body = new ApiError(Instant.now(), status.value(), status.getReasonPhrase(), message, req.getRequestURI(), fields);</span>
+<span class="fc" id="L83">        return ResponseEntity.status(status).body(body);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

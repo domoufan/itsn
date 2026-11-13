@@ -24,6 +24,7 @@ import java.util.List;
 
 /** Gestion des comptes (administrateur) et annuaire des techniciens (personnel). */
 @RestController
+@Transactional(readOnly = true) // les réponses sont construites à partir d'associations chargées paresseusement
 @RequestMapping("/api/users")
 public class UserAdminController {
 
