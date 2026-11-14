@@ -1,0 +1,12 @@
+# Préproduction Render — 2026-11-14T13:28:16Z
+## /actuator/health
+curl: (56) CONNECT tunnel failed, response 403
+
+## /actuator/info
+curl: (56) CONNECT tunnel failed, response 403
+
+## API sans jeton
+curl: (56) CONNECT tunnel failed, response 403
+000
+## smoke-test.sh (commit f561b63)
+Attente du commit f561b63 sur https://itsn-api-staging.onrender.com (max 10 min)…
