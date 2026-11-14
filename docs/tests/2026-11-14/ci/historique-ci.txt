@@ -1,0 +1,7 @@
+completed	success	fix(security): Spring Boot 4.0.9 et Tomcat 11.0.29 (CVE-2026-55276, C…	CI	main	push	43598035285	4m36s	2026-11-14T13:05:55Z
+completed	failure	fix(docker): commentaires Dockerfile sur lignes dédiées	CI	main	push	43597425188	4m4s	2026-11-14T12:58:47Z
+completed	failure	fix(security): USER nginx explicite dans le Dockerfile frontend (DS-0…	CI	main	push	43597091060	3m46s	2026-11-14T12:54:28Z
+completed	failure	fix(security): pgjdbc 42.7.12 (CVE-2026-54291) et nginx non privilégi…	CI	main	push	43596863096	1m35s	2026-11-14T12:51:35Z
+completed	failure	ci: action Trivy v0.36.0 (tags antérieurs retirés après l'incident de…	CI	main	push	43596542610	1m0s	2026-11-14T12:47:35Z
+completed	failure	chore: compte GitHub dans le blueprint Render	CI	main	push	43596390529	1m6s	2026-11-14T12:45:43Z
+completed	failure	Merge du commit initial GitHub (README conservé côté local)	CI	main	push	43594017151	1m32s	2026-11-14T12:16:47Z

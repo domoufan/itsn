@@ -1,0 +1,11 @@
+│ backend/pom.xml            │    pom     │        0        │    -    │         -         │
+│ frontend/package-lock.json │    npm     │        0        │    -    │         -         │
+│ backend/Dockerfile         │ dockerfile │        -        │    -    │         0         │
+│ frontend/Dockerfile        │ dockerfile │        -        │    -    │         0         │
+│ ghcr.io/domoufan/itsn-backend:050dd2c (alpine 3.24.4) │ alpine │        0        │    -    │
+│ app/app.jar                                           │  jar   │        0        │    -    │
+[36;1m  echo "### Artefacts publiés"[0m
+[36;1m  echo "- Version : \`050dd2c\` (commit 050dd2c2a14a30f820ff5a34b0cb981940cfad39)"[0m
+[36;1m  echo "- Backend : \`ghcr.io/domoufan/itsn-backend:050dd2c\`"[0m
+[36;1m  echo "- Frontend : \`ghcr.io/domoufan/itsn-frontend:050dd2c\`"[0m
+URL: https://github.com/domoufan/itsn/actions/runs/43598035285
