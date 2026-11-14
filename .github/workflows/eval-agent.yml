@@ -36,6 +36,15 @@ jobs:
           echo "API injoignable"; exit 1
       - name: Version déployée
         run: curl -fsS "${{ inputs.base_url }}/actuator/info" | tee info.json; echo
+      - name: État de l'agent IA côté serveur
+        run: |
+          TOKEN=$(curl -fsS -H 'Content-Type: application/json' -d '{"email":"manager@senetech.example","password":"Demo@2026!"}' \
+            "${{ inputs.base_url }}/api/auth/login" | python3 -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
+          curl -fsS -H "Authorization: Bearer $TOKEN" "${{ inputs.base_url }}/api/ai/status" | tee ai-status.json; echo
+          if [ "${{ inputs.fallback }}" != "true" ] && ! grep -q '"enabled":true' ai-status.json; then
+            echo "::error::L'agent IA n'est pas activé sur le serveur (AI_ENABLED / ANTHROPIC_API_KEY manquants) : évaluation annulée"
+            exit 1
+          fi
       - name: Évaluation
         run: |
           python3 tools/eval/evaluate_triage.py \
