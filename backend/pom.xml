@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.7</version>
+    <version>4.0.9</version>
     <relativePath/>
   </parent>
 
@@ -20,6 +20,8 @@
   <properties>
     <java.version>21</java.version>
     <springdoc.version>3.0.1</springdoc.version>
+    <!-- surcharges de sécurité détectées par Trivy sur l'image (CVE-2026-55276, CVE-2026-65182) -->
+    <tomcat.version>11.0.29</tomcat.version>
   </properties>
 
   <dependencies>
