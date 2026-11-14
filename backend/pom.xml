@@ -77,6 +77,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
+      <version>42.7.12</version>   <!-- surcharge : CVE-2026-54291 (contournement de protection SCRAM) détectée par Trivy en CI -->
       <scope>runtime</scope>
     </dependency>
 
