@@ -21,13 +21,21 @@ def call(base, method, path, token=None, body=None):
     req.add_header("Content-Type", "application/json")
     if token:
         req.add_header("Authorization", "Bearer " + token)
+    def parse(raw):
+        if not raw:
+            return None
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            # page HTML d'un proxy (502/504 de l'hébergeur, par exemple) : on conserve le texte comme message
+            return {"message": raw[:200]}
     try:
         with urllib.request.urlopen(req, timeout=120) as r:
-            raw = r.read().decode()
-            return r.status, (json.loads(raw) if raw else None)
+            return r.status, parse(r.read().decode(errors="replace"))
     except urllib.error.HTTPError as e:
-        raw = e.read().decode()
-        return e.code, (json.loads(raw) if raw else None)
+        return e.code, parse(e.read().decode(errors="replace"))
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        return 0, {"message": f"réseau : {e}"}
 
 
 def main():
