@@ -40,6 +40,7 @@ Tableau : Journal des usages de l'IA (extrait ; à compléter jusqu'au dépôt f
 | 10/11/2026 — Claude | Exécution des tests TS-01, TS-02, TS-03, TS-05, TP-01 ; intégration des résultats et captures dans le mémoire | Sorties conservées dans `docs/tests/2026-11-10/` |
 | 13/11/2026 — Claude | Script Playwright rejouant les scénarios TM-01 à TM-08 ; détection et correction de l'anomalie AN-08 ; test de non-régression TI-13 ; évaluation du triage en mode repli | Résultats relus ; captures vérifiées ; suite backend relancée (41/41) |
 | 14/11/2026 — Claude (connecteurs GitHub, Render, Neon) | Mise au point de la CI sur GitHub (sept exécutions, quatre corrections de sécurité) ; création du projet Neon et des trois services Render par API ; premier déploiement ; preuves consignées | Journaux relus ; versions des correctifs vérifiées sur les avis de sécurité ; identifiants de connexion jamais reproduits dans la conversation ni dans le dépôt |
+| 14/11/2026 — Claude (connecteur GitHub) | Déclenchement et suivi de la CD : déploiement bloqué par le smoke test (AN-11), correctif, livraison `962f5d4` puis `2410df5`, retour arrière vers `962f5d4` ; les trois approbations de production ont été données par l'étudiant dans GitHub | Journaux des quatre exécutions relus et archivés ; décision de promotion toujours humaine |
 | 14/11/2026 — Claude | Activation du crédit API inclus dans l'abonnement Max, clé saisie par l'étudiant dans Render ; workflow « Eval agent IA » ; évaluation réelle de l'agent (90 triages) ; analyse des écarts ; mise à jour des chapitres 5, 7 et 8 | Première exécution invalidée (agent non activé, AN-09) et refaite ; résultats recoupés avec la table `ai_suggestions` ; interprétation relue par l'étudiant |
 | [date] — [outil] | [usage] | [vérification] |
 
@@ -77,10 +78,10 @@ Tableau : Matrice de traçabilité exigences → réalisation → tests
 | ENF-07 Repli sans IA, budget | `HeuristicTriageAgent`, garde-fous de `AiSuggestionService` | TU-05, TI-20, TI-21 — réussi (10/11/2026) |
 | ENF-08 Résistance aux détournements | Prompt système, balises de données, validation de sortie, outils en lecture seule | TE-01 (cas 30), TS-06 — réussis (14/11/2026 : 0 détournement sur 3, tentative signalée par l'agent) |
 | ENF-09 Performance p95 < 500 ms | Index, pagination | TP-01 — réussi : p95 31 ms (10/11/2026) — mesure locale |
-| ENF-10 Supervision | Actuator, sondes Render | TI-12, TD-02 — TI-12 réussi (10/11/2026) ; TD-02 partiel (services en ligne le 14/11/2026, CD en attente des crochets) |
+| ENF-10 Supervision | Actuator, sondes Render | TI-12, TD-02 — TI-12 réussi (10/11/2026) ; TD-02 réussi (14/11/2026 : CD 43622128103, smoke tests préproduction et production) |
 | ENF-11 Sauvegarde/restauration | Neon PITR, `pg_dump`, guide | TD-03 — TD-03 réussi en local (13/11/2026) |
 | ENF-12 Reproductibilité | `docker-compose.yml`, Dockerfiles, Flyway, README | TD-01 — [statut] |
-| ENF-13 Livraison bloquante, artefact unique | `ci.yml`, `cd.yml`, GHCR | TD-02, TD-04 — CI bloquante prouvée (14/11/2026 : 4 blocages, run 43598035285 réussi) ; déploiement par la CD et retour arrière à exécuter |
+| ENF-13 Livraison bloquante, artefact unique | `ci.yml`, `cd.yml`, GHCR | TD-02, TD-04 — CI bloquante prouvée (14/11/2026 : 4 blocages, run 43598035285 réussi) ; TD-02 réussi (CD 43622128103) ; TD-04 réussi (CD 43624659808, retour à `962f5d4`) — 14/11/2026 |
 | ENF-14 Ergonomie | Angular Material, libellés, badges texte + couleur, `NotifyService` | TU-F01 (réussi 08/11), TM-08 réussi (13/11/2026) ; limite : navigation non repliée sur mobile |
 
 <<<pagebreak>>>
@@ -226,4 +227,5 @@ Tableau : Preuves déjà disponibles à la date de rédaction
 | Exécutions de la CI sur GitHub Actions | 14/11/2026 | Historique de sept exécutions et journal de l'exécution réussie 43598035285 : `docs/tests/2026-11-14/ci/` ; images `ghcr.io/domoufan/itsn-backend:050dd2c` et `…-frontend:050dd2c` |
 | Premier déploiement cloud | 14/11/2026 | Services Render et base Neon en ligne au commit `f561b63` ; extraits de journaux : `docs/tests/2026-11-14/deploiement/premier-deploiement.md` |
 | Recherche de secrets TS-04 | 14/11/2026 | `docs/tests/2026-11-14/securite/TS-04.txt` |
+| Livraison par la CD (TD-02) et retour arrière (TD-04) | 14/11/2026 | Exécutions 43620363033 (bloquée), 43622128103, 43623671662, 43624659808 ; sorties des smoke tests : `docs/tests/2026-11-14/deploiement/TD-02-cd.md`, `TD-04-retour-arriere.md` |
 | Évaluation du triage (agent réel, préproduction) | 14/11/2026 | 30 cas × 3, `docs/tests/2026-11-14/eval/triage-agent-20261114-161042.md` et `.csv` ; sortie console du workflow 43613168200 `run-43613168200-console.txt` |
