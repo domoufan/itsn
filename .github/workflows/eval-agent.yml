@@ -1,0 +1,53 @@
+name: Eval agent IA
+
+# Évaluation TE-01 du pipeline agentique contre un environnement déployé (préproduction par défaut).
+# Lancement manuel uniquement ; aucune clé n'est manipulée ici : l'agent est configuré côté serveur (Render).
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL de l'API à évaluer"
+        default: "https://itsn-api-staging.onrender.com"
+        required: true
+      repeat:
+        description: "Répétitions par cas"
+        default: "3"
+        required: true
+      fallback:
+        description: "Forcer le repli heuristique (sans IA)"
+        type: boolean
+        default: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Attente de l'API
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "${{ inputs.base_url }}/actuator/health" | grep -q '"UP"'; then echo "API prête"; exit 0; fi
+            sleep 10
+          done
+          echo "API injoignable"; exit 1
+      - name: Version déployée
+        run: curl -fsS "${{ inputs.base_url }}/actuator/info" | tee info.json; echo
+      - name: Évaluation
+        run: |
+          python3 tools/eval/evaluate_triage.py \
+            --base "${{ inputs.base_url }}" \
+            --email manager@senetech.example --password 'Demo@2026!' \
+            --repeat "${{ inputs.repeat }}" $([ "${{ inputs.fallback }}" = "true" ] && echo --fallback) \
+            --out eval-results
+      - name: Résumé
+        run: cat eval-results/*.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-triage-${{ github.run_id }}
+          path: |
+            eval-results/
+            info.json
