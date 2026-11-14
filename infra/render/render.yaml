@@ -1,13 +1,17 @@
-# Blueprint Render (Infrastructure as Code) – à importer depuis le tableau de bord Render.
-# Deux services web (préproduction / production) déployés depuis les images publiées par la CI sur GHCR,
-# un site statique pour l'interface Angular. La base PostgreSQL est hébergée chez Neon (offre gratuite) :
-# l'URL JDBC est fournie en secret, jamais versionnée.
+# Blueprint Render (Infrastructure as Code) — état réel des services créés le 14/11/2026.
+# Les deux services API sont construits par Render depuis backend/Dockerfile au commit indiqué par la chaîne CD
+# (deploy hook + ref=<sha>) ; l'auto-déploiement est désactivé pour que seule la CD décide des mises à jour.
+# La base PostgreSQL est hébergée chez Neon (projet itsn, branches main et staging) ; ses identifiants sont saisis
+# dans Render (sync: false) et ne figurent jamais dans le dépôt.
 services:
   - type: web
     name: itsn-api-staging
-    runtime: image
-    image:
-      url: ghcr.io/domoufan/itsn-backend:latest   # remplacé à chaque livraison par le deploy hook (imgURL=…)
+    runtime: docker
+    repo: https://github.com/domoufan/itsn
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeploy: false
     plan: free
     region: frankfurt
     healthCheckPath: /actuator/health/readiness
@@ -15,15 +19,15 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: staging
       - key: DATABASE_URL
-        sync: false          # saisi dans Render (secret)
+        sync: false
       - key: DATABASE_USER
         sync: false
       - key: DATABASE_PASSWORD
         sync: false
       - key: JWT_SECRET
-        generateValue: true  # généré par Render, jamais versionné
+        generateValue: true
       - key: CORS_ALLOWED_ORIGINS
-        value: https://itsn-staging.onrender.com
+        value: https://itsn.onrender.com,https://itsn-api-staging.onrender.com
       - key: SEED_ENABLED
         value: "true"
       - key: AI_ENABLED
@@ -35,9 +39,12 @@ services:
 
   - type: web
     name: itsn-api
-    runtime: image
-    image:
-      url: ghcr.io/domoufan/itsn-backend:latest
+    runtime: docker
+    repo: https://github.com/domoufan/itsn
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeploy: false
     plan: free
     region: frankfurt
     healthCheckPath: /actuator/health/readiness
@@ -55,17 +62,21 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: https://itsn.onrender.com
       - key: SEED_ENABLED
-        value: "true"        # jeu de données fictives pour la démonstration (à désactiver chez un vrai client)
+        value: "true"
       - key: AI_ENABLED
         value: "true"
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: AI_DAILY_BUDGET_USD
         value: "1.00"
+      - key: APP_VERSION
+        value: production
 
   - type: web
     name: itsn
     runtime: static
+    repo: https://github.com/domoufan/itsn
+    branch: main
     buildCommand: cd frontend && npm ci && npm run build -- --configuration production
     staticPublishPath: frontend/dist/frontend/browser
     routes:

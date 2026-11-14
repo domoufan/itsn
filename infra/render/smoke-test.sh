@@ -3,12 +3,12 @@
 # Usage : smoke-test.sh <url-base-api> <version-attendue>
 set -euo pipefail
 URL="${1:?url manquante}"; EXPECTED="${2:?version manquante}"
-echo "Attente de la version ${EXPECTED} sur ${URL} (max 10 min)…"
+echo "Attente du commit ${EXPECTED} sur ${URL} (max 10 min)…"
 for i in $(seq 1 60); do
-  if body=$(curl -fsS "${URL}/actuator/info" 2>/dev/null) && echo "$body" | grep -q "\"version\":\"${EXPECTED}\""; then
-    echo "Version ${EXPECTED} détectée après $((i*10)) s"; break
+  if body=$(curl -fsS "${URL}/actuator/info" 2>/dev/null) && echo "$body" | grep -q "\"commit\":\"${EXPECTED}"; then
+    echo "Commit ${EXPECTED} détecté après $((i*10)) s"; break
   fi
-  if [ "$i" -eq 60 ]; then echo "ÉCHEC : la version ${EXPECTED} n'est pas servie"; echo "$body"; exit 1; fi
+  if [ "$i" -eq 60 ]; then echo "ÉCHEC : le commit ${EXPECTED} n'est pas servi"; echo "$body"; exit 1; fi
   sleep 10
 done
 health=$(curl -fsS "${URL}/actuator/health")

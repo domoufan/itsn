@@ -49,8 +49,8 @@ management:
 info:
   app:
     name: ITSN
-    version: ${APP_VERSION:dev}
-    commit: ${GIT_COMMIT:local}
+    version: ${APP_VERSION:${RENDER_SERVICE_NAME:dev}}
+    commit: ${GIT_COMMIT:${RENDER_GIT_COMMIT:local}}   # RENDER_GIT_COMMIT est fourni automatiquement par Render
 
 itsn:
   security:

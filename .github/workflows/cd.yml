@@ -1,8 +1,9 @@
 # ============================================================================
 # ITSN – Livraison continue (Render)
 # Mode retenu : livraison continue AVEC validation humaine avant production.
-#  - préproduction : déploiement automatique du même artefact (image taguée) dès que la CI de main réussit ;
-#  - production    : promotion du MÊME artefact après approbation dans l'environnement GitHub « production ».
+#  - préproduction : déploiement automatique du commit validé par la CI de main (Render construit l'image depuis le Dockerfile) ;
+#  - production    : promotion du MÊME commit après approbation dans l'environnement GitHub « production ».
+# Les images publiées sur GHCR par la CI restent les artefacts de référence (traçabilité commit -> image).
 # Les URL de déploiement Render sont des secrets ; aucun secret n'apparaît dans les journaux.
 # ============================================================================
 name: CD
@@ -15,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version (7 premiers caractères du commit) à déployer ou vers laquelle revenir"
+        description: "Commit (SHA complet ou 7 premiers caractères) à déployer ou vers lequel revenir"
         required: true
 
 permissions:
@@ -28,15 +29,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}
+      sha: ${{ steps.v.outputs.sha }}
     steps:
       - id: v
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+            sha="${{ github.event.inputs.version }}"
           else
             sha="${{ github.event.workflow_run.head_sha }}"
-            echo "version=${sha:0:7}" >> "$GITHUB_OUTPUT"
           fi
+          echo "version=${sha:0:7}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
 
   staging:
     name: Déploiement en préproduction
@@ -46,14 +49,14 @@ jobs:
       name: staging
       url: ${{ vars.STAGING_URL }}
     steps:
-      - name: Déclencher Render (préproduction) avec l'image versionnée
+      - name: Déclencher Render (préproduction) sur le commit validé
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
-          IMAGE: ghcr.io/${{ github.repository }}-backend:${{ needs.resolve.outputs.version }}
+          SHA: ${{ needs.resolve.outputs.sha }}
         run: |
           test -n "$HOOK" || { echo "Secret RENDER_DEPLOY_HOOK_STAGING manquant"; exit 1; }
-          curl -fsS "${HOOK}&imgURL=${IMAGE}" -o /dev/null
-          echo "Déploiement demandé : $IMAGE"
+          curl -fsS "${HOOK}&ref=${SHA}" -o /dev/null
+          echo "Déploiement demandé : commit ${SHA}"
       - uses: actions/checkout@v4
       - name: Tests de bon fonctionnement (santé, version déployée, authentification)
         env:
@@ -70,14 +73,14 @@ jobs:
       url: ${{ vars.PRODUCTION_URL }}
     steps:
       - uses: actions/checkout@v4
-      - name: Promouvoir le même artefact en production
+      - name: Promouvoir le même commit en production
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}
-          IMAGE: ghcr.io/${{ github.repository }}-backend:${{ needs.resolve.outputs.version }}
+          SHA: ${{ needs.resolve.outputs.sha }}
         run: |
           test -n "$HOOK" || { echo "Secret RENDER_DEPLOY_HOOK_PRODUCTION manquant"; exit 1; }
-          curl -fsS "${HOOK}&imgURL=${IMAGE}" -o /dev/null
-          echo "Promotion demandée : $IMAGE"
+          curl -fsS "${HOOK}&ref=${SHA}" -o /dev/null
+          echo "Déploiement demandé : commit ${SHA}"
       - name: Vérifications après mise en production
         env:
           URL: ${{ vars.PRODUCTION_URL }}
