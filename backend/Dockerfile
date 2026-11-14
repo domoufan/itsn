@@ -13,8 +13,10 @@ FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S itsn && adduser -S itsn -G itsn
 WORKDIR /app
 COPY --from=build /build/target/*.jar app.jar
+# Render injecte ses variables (dont RENDER_GIT_COMMIT) comme arguments de construction ; la CI passe GIT_COMMIT.
+ARG RENDER_GIT_COMMIT
+ARG GIT_COMMIT=${RENDER_GIT_COMMIT:-local}
 ARG APP_VERSION=dev
-ARG GIT_COMMIT=local
 ENV APP_VERSION=${APP_VERSION} GIT_COMMIT=${GIT_COMMIT} JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom"
 USER itsn
 EXPOSE 8080
