@@ -12,10 +12,10 @@ Tableau : Environnement de développement et versions utilisées
 |---|---|---|
 | Java (OpenJDK Temurin) | 21.0 (LTS) | Exécution du backend |
 | Apache Maven | 3.9 | Construction, tests, couverture (JaCoCo 0.8.13) |
-| Spring Boot | 4.0.7 | Cadriciel serveur (Spring Framework 7, Spring Security 7, Spring Data JPA, Hibernate 7) |
+| Spring Boot | 4.0.9 (4.0.7 initialement ; mise à niveau le 14/11 avec Tomcat 11.0.29 à la suite d'alertes Trivy sur l'image) | Cadriciel serveur (Spring Framework 7, Spring Security 7, Spring Data JPA, Hibernate 7.2) |
 | Flyway (starter Spring Boot) + `flyway-database-postgresql` | fournie par Spring Boot 4.0 | Migrations de schéma |
 | springdoc-openapi | 3.0 | Documentation OpenAPI / Swagger UI |
-| PostgreSQL | 16 | Base de données (local, test, cloud) |
+| PostgreSQL ; pilote JDBC | 16 (16.16 sur Neon) ; pgjdbc 42.7.12 | Base de données (local, test, cloud) |
 | Node.js / npm | 22 / 10 | Outillage frontend |
 | Angular (CLI, cœur, Material, CDK) | 22.2 | Application cliente |
 | Vitest | 5 | Tests unitaires frontend |

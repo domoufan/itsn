@@ -1,0 +1,28 @@
+TS-04 – Recherche de secrets dans le dépôt – 14/11/2026
+
+1) Trivy (CI, run 43598035285, scanners vuln,secret,misconfig, CRITICAL/HIGH bloquants) – job « Sécurité » réussi en 20 s ; résumé :
+Report Summary
+
+┌────────────────────────────┬────────────┬─────────────────┬─────────┬───────────────────┐
+
+│           Target           │    Type    │ Vulnerabilities │ Secrets │ Misconfigurations │
+├────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+│ backend/pom.xml            │    pom     │        0        │    -    │         -         │
+├────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+
+
+│ frontend/package-lock.json │    npm     │        0        │    -    │         -         │
+├────────────────────────────┼────────────┼─────────────────┼─────────┼───────────────────┤
+
+Aucune ligne « Secrets » détectée (Trivy ne liste que les cibles présentant des découvertes).
+
+2) Recherche manuelle de motifs de clés sur l'arbre de travail (commit 65a2846) :
+   motif 'sk-ant-' : 0 fichier(s)
+   motif 'AKIA[0-9A-Z]{16}' : 0 fichier(s)
+   motif 'postgresql://[^ ]*:[^ @]*@' : 0 fichier(s)
+   motif 'BEGIN (RSA|EC|OPENSSH) PRIVATE KEY' : 0 fichier(s)
+   motif 'ghp_[A-Za-z0-9]{20,}' : 0 fichier(s)
+   motif 'srv-[a-z0-9]{20}\?key=' : 0 fichier(s)
+
+3) Secrets réels : variables d'environnement Render (ANTHROPIC_API_KEY, JWT_SECRET, DATABASE_*) et secrets GitHub Actions (RENDER_DEPLOY_HOOK_*) ; .env ignoré par .gitignore :
+.gitignore:2:.env	.env
