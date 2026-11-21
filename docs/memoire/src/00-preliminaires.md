@@ -5,7 +5,7 @@ Je tiens à exprimer ma reconnaissance à toutes les personnes qui ont contribu�
 
 Je remercie en premier lieu mon encadreur, M. Wane, pour sa disponibilité, la rigueur de ses relectures et les orientations qui ont structuré ce projet, de la formulation du problème jusqu'à la validation des choix techniques.
 
-Mes remerciements vont également à l'équipe pédagogique de l'École 221, dont les enseignements de génie logiciel, de bases de données, de réseaux et de gestion de projet constituent le socle sur lequel repose cette plateforme.
+Mes remerciements vont également à l'équipe pédagogique de l'École 221, dont les enseignements du parcours Génie logiciel — analyse et conception, développement, bases de données, tests, méthodes agiles et gestion de projet — constituent le socle sur lequel repose cette plateforme.
 
 Je remercie enfin ma famille et mes camarades de promotion pour leur soutien constant tout au long de cette année de formation.
 

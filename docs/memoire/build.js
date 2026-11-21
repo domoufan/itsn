@@ -34,7 +34,7 @@ function inline(tokens, base = {}) {
       case 'strong': runs.push(...inline(t.tokens, { ...base, bold: true })); break;
       case 'em': runs.push(...inline(t.tokens, { ...base, italics: true })); break;
       case 'codespan': runs.push(new D.TextRun({ text: decode(t.text), font: 'Consolas', size: 19, ...base })); break;
-      case 'link': runs.push(...inline(t.tokens, { ...base, color: '1D4ED8' })); break;
+      case 'link': runs.push(...inline(t.tokens, { ...base, color: '1F9D5A' })); break;
       case 'br': runs.push(new D.TextRun({ break: 1 })); break;
       case 'del': runs.push(...inline(t.tokens, { ...base, strike: true })); break;
       default:
@@ -99,8 +99,8 @@ async function image(token) {
   if (token.href.startsWith('placeholder:')) {
     out.push(new D.Paragraph({
       alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 0 },
-      border: { top: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, bottom: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, left: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, right: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' } },
-      shading: { type: D.ShadingType.CLEAR, fill: 'F3F4F6' },
+      border: { top: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, bottom: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, left: { style: D.BorderStyle.DASHED, size: 6, color: '9CA3AF' }, right: { style: D.BorderStyle.DASHED, size: 6, color: '81B5A1' } },
+      shading: { type: D.ShadingType.CLEAR, fill: 'EEF7F2' },
       children: [new D.TextRun({ text: `[Capture d'écran — ${token.href.slice('placeholder:'.length).replace(/_/g, ' ')} — à insérer après exécution de l'application]`, italics: true, color: '6B7280' })],
     }));
   } else {
@@ -122,9 +122,9 @@ function table(token) {
   const widths = colWidths(token);
   const small = cols >= 6;
   const size = small ? 17 : 19; // 8,5 pt / 9,5 pt
-  const cell = (cellTok, isHeader) => new D.TableCell({
+  const cell = (cellTok, isHeader, alt = false) => new D.TableCell({
     width: { size: widths[cellTok.__i], type: D.WidthType.DXA },
-    shading: isHeader ? { type: D.ShadingType.CLEAR, fill: '0F2140' } : undefined,
+    shading: isHeader ? { type: D.ShadingType.CLEAR, fill: '032D42' } : (alt ? { type: D.ShadingType.CLEAR, fill: 'F3FAF6' } : undefined),
     margins: { top: 50, bottom: 50, left: 80, right: 80 },
     children: [new D.Paragraph({ spacing: { before: 0, after: 0, line: 240, lineRule: D.LineRuleType.AUTO },
       children: inline(cellTok.tokens, { size, bold: isHeader || undefined, color: isHeader ? 'FFFFFF' : undefined }) })],
@@ -132,10 +132,10 @@ function table(token) {
   const rows = [];
   rows.push(new D.TableRow({ tableHeader: true, children: token.header.map((c, i) => cell({ ...c, __i: i }, true)) }));
   token.rows.forEach((r, ri) => rows.push(new D.TableRow({ cantSplit: true,
-    children: r.map((c, i) => { const tc = cell({ ...c, __i: i }, false); return tc; }) })));
+    children: r.map((c, i) => cell({ ...c, __i: i }, false, ri % 2 === 1)) })));
   // bandes alternées
   const t = new D.Table({ width: { size: CONTENT_W, type: D.WidthType.DXA }, columnWidths: widths, rows,
-    borders: borders('D1D5DB') });
+    borders: borders('C9DED5') });
   const out = [];
   state.table++;
   out.push(caption('Tableau', state.table, state.pendingTableCaption || 'Tableau', 200, 80));
@@ -186,8 +186,8 @@ function code(token) {
   const lines = token.text.split('\n');
   return [new D.Paragraph({
     spacing: { before: 120, after: 160, line: 230, lineRule: D.LineRuleType.AUTO },
-    shading: { type: D.ShadingType.CLEAR, fill: 'F3F4F6' },
-    border: { left: { style: D.BorderStyle.SINGLE, size: 12, color: '1D4ED8' } },
+    shading: { type: D.ShadingType.CLEAR, fill: 'EEF7F2' },
+    border: { left: { style: D.BorderStyle.SINGLE, size: 12, color: '1F9D5A' } },
     keepLines: true,
     children: lines.flatMap((l, i) => [new D.TextRun({ text: l.length ? l : ' ', font: 'Consolas', size: 16 }), ...(i < lines.length - 1 ? [new D.TextRun({ break: 1 })] : [])]),
   })];
@@ -198,7 +198,7 @@ function blockquote(token) {
   for (const t of token.tokens) {
     if (t.type === 'paragraph') out.push(new D.Paragraph({
       indent: { left: 567, right: 567 }, alignment: D.AlignmentType.JUSTIFIED, spacing: { before: 120, after: 120 },
-      border: { left: { style: D.BorderStyle.SINGLE, size: 12, color: '9CA3AF' } },
+      border: { left: { style: D.BorderStyle.SINGLE, size: 12, color: '81B5A1' } },
       children: inline(t.tokens, { italics: true }),
     }));
   }
@@ -217,18 +217,20 @@ function coverPage() {
   ];
   if (META.logo && fs.existsSync(path.resolve(__dirname, META.logo))) {
     children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 200 },
-      children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(path.resolve(__dirname, META.logo)), transformation: { width: 140, height: 140 } })] }));
+      children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(path.resolve(__dirname, META.logo)), transformation: { width: 140, height: 140 } })], spacing: { line: 240, lineRule: D.LineRuleType.AUTO } }));
   } else {
     children.push(c('[LOGO DE L\'ÉTABLISSEMENT]', { color: '9CA3AF', size: 20 }, { before: 300, after: 300 }));
   }
   children.push(
-    c('Mémoire de fin de formation', { size: 24 }, { before: 300 }),
+    new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 100, line: 240, lineRule: D.LineRuleType.AUTO },
+      children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(path.resolve(__dirname, 'itsn-wordmark.png')), transformation: { width: 360, height: 70 } })] }),
+    c('Mémoire de fin de formation', { size: 24 }, { before: 200 }),
     c(`Licence professionnelle — ${META.parcours}`, { size: 24 }),
     c(`Code ${META.code}`, { size: 22 }, { after: 600 }),
-    new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 200 },
-      border: { top: { style: D.BorderStyle.SINGLE, size: 12, color: '0F2140' }, bottom: { style: D.BorderStyle.SINGLE, size: 12, color: '0F2140' } },
-      children: [new D.TextRun({ text: META.titre, bold: true, size: 40, font: FONT, color: '0F2140' })] }),
-    c(META.sousTitre, { italics: true, size: 26 }, { after: 800 }),
+    new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 200, line: 300, lineRule: D.LineRuleType.AUTO },
+      border: { top: { style: D.BorderStyle.SINGLE, size: 12, color: '032D42' }, bottom: { style: D.BorderStyle.SINGLE, size: 12, color: '1F9D5A' } },
+      children: [new D.TextRun({ text: META.titre, bold: true, size: 40, font: FONT, color: '032D42' })] }),
+    c(META.sousTitre, { italics: true, size: 26, color: '1F9D5A' }, { after: 800 }),
     c('Présenté par', { size: 22 }, { before: 400 }),
     ...META.etudiants.map((e) => c(e, { bold: true, size: 26 })),
     c('Sous la direction de', { size: 22 }, { before: 300 }),
@@ -290,7 +292,7 @@ async function main() {
 
   const footer = (label) => new D.Footer({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [
     new D.TextRun({ text: `${META.titreCourt} — `, size: 18, color: '6B7280' }), new D.TextRun({ children: [D.PageNumber.CURRENT], size: 18, color: '6B7280' })] })] });
-  const header = new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: 'D1D5DB' } },
+  const header = new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: '1F9D5A' } },
     children: [new D.TextRun({ text: 'Plateforme de gestion des interventions techniques (ITSM) — ITSN', size: 16, color: '6B7280', italics: true })] })] });
 
   const pageProps = { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN } };
@@ -306,12 +308,12 @@ async function main() {
       default: { document: { run: { font: FONT, size: 22 }, paragraph: { spacing: { line: 276, after: 120 } } } },
       paragraphStyles: [
         { id: 'Normal', name: 'Normal', run: { font: FONT, size: 22 }, paragraph: { spacing: { line: 276, after: 120 } } },
-        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(0, 34, '0F2140', 480, 240, {}) },
-        { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(1, 28, '1D4ED8', 360, 160) },
-        { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(2, 24, '0F2140', 240, 120) },
-        { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(3, 22, '374151', 200, 80, { italics: true }) },
-        { id: 'CaptionFigure', name: 'Legende figure', basedOn: 'Normal', next: 'Normal', run: { font: FONT, size: 19, color: '374151', italics: true }, paragraph: { spacing: { before: 60, after: 240 } } },
-        { id: 'CaptionTableau', name: 'Legende tableau', basedOn: 'Normal', next: 'Normal', run: { font: FONT, size: 19, color: '374151', italics: true }, paragraph: { spacing: { before: 200, after: 80 }, keepNext: true } },
+        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(0, 34, '032D42', 480, 240, {}) },
+        { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(1, 28, '1F9D5A', 360, 160) },
+        { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(2, 24, '032D42', 240, 120) },
+        { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, ...hStyle(3, 22, '4B6B5E', 200, 80, { italics: true }) },
+        { id: 'CaptionFigure', name: 'Legende figure', basedOn: 'Normal', next: 'Normal', run: { font: FONT, size: 19, color: '032D42', italics: true }, paragraph: { spacing: { before: 60, after: 240 } } },
+        { id: 'CaptionTableau', name: 'Legende tableau', basedOn: 'Normal', next: 'Normal', run: { font: FONT, size: 19, color: '032D42', italics: true }, paragraph: { spacing: { before: 200, after: 80 }, keepNext: true } },
       ],
     },
     numbering: {

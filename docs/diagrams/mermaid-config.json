@@ -1,0 +1,10 @@
+{ "theme": "base", "themeVariables": {
+  "primaryColor": "#EEF7F2", "primaryTextColor": "#032D42", "primaryBorderColor": "#1F9D5A",
+  "secondaryColor": "#E3F1EA", "tertiaryColor": "#F3FAF6", "lineColor": "#1F3A4A", "textColor": "#032D42",
+  "actorBkg": "#EEF7F2", "actorBorder": "#1F9D5A", "actorTextColor": "#032D42", "signalColor": "#1F3A4A", "signalTextColor": "#032D42",
+  "labelBoxBkgColor": "#E3F1EA", "labelBoxBorderColor": "#1F9D5A", "noteBkgColor": "#FFF7E0", "noteBorderColor": "#B45309",
+  "activationBkgColor": "#DDF3EC", "activationBorderColor": "#1F9D5A", "sequenceNumberColor": "#fff",
+  "classText": "#032D42", "nodeBorder": "#1F9D5A", "clusterBkg": "#F3FAF6", "clusterBorder": "#81B5A1", "edgeLabelBackground": "#ffffff",
+  "fontFamily": "Inter, Arial, sans-serif",
+  "sectionBkgColor": "#E3F1EA", "altSectionBkgColor": "#F3FAF6", "sectionBkgColor2": "#DDF3EC", "taskBkgColor": "#1F9D5A", "taskBorderColor": "#032D42", "taskTextColor": "#ffffff", "taskTextDarkColor": "#032D42", "activeTaskBkgColor": "#3CC57A", "activeTaskBorderColor": "#032D42", "doneTaskBkgColor": "#81B5A1", "doneTaskBorderColor": "#032D42", "critBkgColor": "#D64545", "critBorderColor": "#8B1E1E", "todayLineColor": "#D64545", "gridColor": "#C9DED5"
+} }
